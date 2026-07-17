@@ -21,7 +21,7 @@ def load_data_builder():
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)
-    return module
+    return module 
 
 
 def logo_data_uri() -> str:
