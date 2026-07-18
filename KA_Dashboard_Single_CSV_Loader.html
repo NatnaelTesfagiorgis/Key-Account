@@ -52,7 +52,7 @@ table{width:100%;border-collapse:separate;border-spacing:0;white-space:nowrap;fo
   </div>
 </div>
 
-<div id="page" class="page">
+<div id="page" class="page" style="display:block">
 <header class="topbar"><div class="logo-box">HABESHA</div><h1>Key Account Performance Dashboard</h1></header>
 <section class="filters">
 <div class="filter"><label>Date / Period</label><select id="period"><option value="MTD">MTD</option><option value="YTD">YTD</option></select></div>
@@ -72,7 +72,7 @@ table{width:100%;border-collapse:separate;border-spacing:0;white-space:nowrap;fo
   <article class="panel"><h2>Fridge Prod. Breakdown</h2><div class="chart"><canvas id="fridgeBreakdown"></canvas></div></article>
   <article class="panel"><h2>Volume Summary</h2><div class="chart"><canvas id="volumeSummary"></canvas></div></article>
 </section>
-<section class="table-panel"><div class="toolbar"><strong class="table-title">KA Manager Vol. Perf.</strong><button id="exportManager" class="btn">⇩ Export</button></div><div class="table-wrap"><table id="managerTable"></table></div></section>
+<section class="table-panel"><div class="toolbar"><strong class="table-title">KA Manager Vol. Perf.</strong><span id="activeScopeNote" style="font-weight:800;color:#6b5b35"></span><button id="exportManager" class="btn">⇩ Export</button></div><div class="table-wrap"><table id="managerTable"></table></div></section>
 <section class="table-panel">
   <div class="toolbar">
     <strong class="table-title">Outlet Vol. Perf.</strong>
@@ -111,6 +111,7 @@ const dateObj=v=>new Date(v+"T00:00:00");
 const div=(a,b)=>val(b)? val(a)/val(b):null;
 const cap=v=>v==null?null:Math.max(0,Math.min(v,1));
 const sum=(rows,key)=>rows.reduce((a,r)=>a+(val(r[key])||0),0);
+function normCat(v){return String(v||"").trim().toLowerCase();}
 function bool(v){return v===true||["true","yes","y","1"].includes(String(v??"").trim().toLowerCase())}
 function setStatus(msg,kind=""){const e=document.getElementById("status");e.textContent=msg;e.className="status "+kind}
 function parseCSV(file){return new Promise((resolve,reject)=>Papa.parse(file,{header:true,skipEmptyLines:true,dynamicTyping:true,complete:r=>resolve(r.data),error:reject}))}
@@ -131,18 +132,6 @@ function payloadFromSingleCSV(rows){
   const required=["outlets","sales","targets","visits","execution","calendar","kpiConfig"];
   const missing=required.filter(t=>!seenTables.has(t));
   if(missing.length) throw new Error("Missing table section in CSV: "+missing.join(", "));
-  // Visualization safety: always force Actual and Target to crate equivalent
-  // when the extract contains the raw value and the conversion factor.
-  facts.sales.forEach(r=>{
-    const raw=val(r["Raw Actual Volume"]);
-    const factor=val(r["Crate Equivalent Factor"]);
-    if(raw!==null && factor!==null) r["Actual Volume"]=raw*factor;
-  });
-  facts.targets.forEach(r=>{
-    const raw=val(r["Raw Full Month Target"]);
-    const factor=val(r["Target Crate Equivalent Factor"]);
-    if(raw!==null && factor!==null) r["Full Month Target"]=raw*factor;
-  });
   return {facts,meta,kpiTargets};
 }
 function unique(rows,key){return [...new Set(rows.map(r=>r[key]).filter(v=>v!==undefined&&v!==null&&String(v).trim()!==""))].sort()}
@@ -204,8 +193,8 @@ function fullMonthWorkingDays(){return workingDays(MONTH_START,monthEnd(MONTH_ST
 function remainingWorkingDays(){const t=new Date(LAST);t.setDate(t.getDate()+1);return workingDays(t,monthEnd(LAST))}
 function daysInPeriod(start,end){return Math.max(1,Math.round((end-start)/86400000)+1)}
 function baseMatch(r,s){return (s.manager==="ALL"||r["KA Manager"]===s.manager)&&(s.segment==="ALL"||r.Segment===s.segment)&&(s.outlet==="ALL"||r["Outlet ID"]===s.outlet)}
-function salesMatch(r,s){return baseMatch(r,s)&&(s.sku==="ALL"||r.SKU===s.sku)&&(s.category==="ALL"||r.Category===s.category)}
-function targetMatch(r,s){return baseMatch(r,s)&&(s.category==="ALL"||r.Category===s.category)}
+function salesMatch(r,s){return baseMatch(r,s)&&(s.sku==="ALL"||r.SKU===s.sku)&&(s.category==="ALL"||normCat(r.Category)===normCat(s.category))}
+function targetMatch(r,s){return baseMatch(r,s)&&(s.category==="ALL"||normCat(r.Category)===normCat(s.category))}
 function selectedOutlets(s){return F.outlets.filter(r=>baseMatch(r,s)&&bool(r["Is Active"])!==false)}
 function salesRows(s,start,end){return F.sales.filter(r=>salesMatch(r,s)&&inRange(r.Date,start,end))}
 function visitRows(s,start,end){return F.visits.filter(r=>baseMatch(r,s)&&inRange(r.Date,start,end))}
@@ -228,7 +217,7 @@ function aggregateKPIs(s,period=s.period){
  let weighted=0,weights=0;F.kpiConfig.forEach(r=>{if(!isIncludedFinal(r["Included Final"]))return;const key=kpiName(r.KPI),v=key?values[key]:null,w=kpiWeight(r.Weight);if(v!=null&&Number.isFinite(v)&&w!=null){weighted+=v*w;weights+=w}});
  return {overall:weights?weighted/weights:null,actual,target,volumeAch,planned,actualVisits,visitCompletion,jpAdherence,fridgeProductivity,executionActual,executionTarget,executionAch,activeOutlets:outs.length}
 }
-function renderCards(){const k=aggregateKPIs(state());const cards=[["Overall KPI",k.overall,D.kpiTargets["Overall KPI"]||.8,"p"],["Volume Achievement",k.volumeAch,D.kpiTargets.Volume||1,"p",`Actual: ${num(k.actual)} &nbsp; Target: ${num(k.target)}`],["JP Adherence",k.jpAdherence,D.kpiTargets["JP Adherence"]||.8,"p"],["Visit Completion",k.visitCompletion,D.kpiTargets["Visit Completion"]||1,"p"],["Active Outlets",k.activeOutlets,null,"n"],["Execution Standard",k.executionActual,k.executionTarget,"p"]];document.getElementById("cards").innerHTML=cards.map(c=>{const val=c[3]==="p"?pct(c[1]):c[3]==="d"?num(c[1],2):num(c[1]);const sub=c[4]??(c[2]==null?"":`Target: ${c[3]==="p"?pct(c[2]):num(c[2],2)}`);const ach=c[2]&&c[1]!=null?Math.min(c[1]/c[2],1):0;const color=c[1]==null?SAND:(c[2]&&c[1]>=c[2]?GREEN:NAVY);return `<div class="card"><div class="card-title">${c[0]}</div><div class="card-value" style="color:${color}">${val}</div><div class="card-sub">${sub}</div><div class="progress"><span style="width:${Math.max(0,ach*100)}%;background:${color}"></span></div></div>`}).join("")}
+function renderCards(){const k=aggregateKPIs(state());const cards=[["Overall KPI",k.overall,D.kpiTargets["Overall KPI"]||.8,"p"],["Volume Achievement",k.volumeAch,D.kpiTargets.Volume||1,"p",`Actual: ${num(k.actual)} &nbsp; Target: ${num(k.target)} &nbsp; <span style="font-size:11px;color:#7b6d54">Category: ${state().category}</span>`],["JP Adherence",k.jpAdherence,D.kpiTargets["JP Adherence"]||.8,"p"],["Visit Completion",k.visitCompletion,D.kpiTargets["Visit Completion"]||1,"p"],["Active Outlets",k.activeOutlets,null,"n"],["Execution Standard",k.executionActual,k.executionTarget,"p"]];document.getElementById("cards").innerHTML=cards.map(c=>{const val=c[3]==="p"?pct(c[1]):c[3]==="d"?num(c[1],2):num(c[1]);const sub=c[4]??(c[2]==null?"":`Target: ${c[3]==="p"?pct(c[2]):num(c[2],2)}`);const ach=c[2]&&c[1]!=null?Math.min(c[1]/c[2],1):0;const color=c[1]==null?SAND:(c[2]&&c[1]>=c[2]?GREEN:NAVY);return `<div class="card"><div class="card-title">${c[0]}</div><div class="card-value" style="color:${color}">${val}</div><div class="card-sub">${sub}</div><div class="progress"><span style="width:${Math.max(0,ach*100)}%;background:${color}"></span></div></div>`}).join("")}
 function kill(id){if(charts[id]){charts[id].destroy();delete charts[id]}}
 function combo(id,rows,labelKey,aKey,tKey,hKey){kill(id);charts[id]=new Chart(document.getElementById(id),{type:"bar",data:{labels:rows.map(r=>r[labelKey]),datasets:[{label:"Actual",data:rows.map(r=>r[aKey]??0),backgroundColor:NAVY,borderRadius:5,yAxisID:"y"},{label:"Target",data:rows.map(r=>r[tKey]??0),backgroundColor:SAND,borderRadius:5,yAxisID:"y"},{label:"Achievement %",data:rows.map(r=>r[hKey]==null?null:r[hKey]*100),type:"line",borderColor:GREEN,backgroundColor:GREEN,borderWidth:3,tension:.35,borderDash:[6,4],pointRadius:4,pointBackgroundColor:"#fff",pointBorderColor:GREEN,pointBorderWidth:2,yAxisID:"y1"}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top",align:"center"},datalabels:{display:c=>c.datasetIndex===2,formatter:v=>v==null?"":Math.round(v)+"%",anchor:"end",align:"top",color:"#1f1f1f",font:{weight:"700",size:11}}},scales:{y:{beginAtZero:true,grid:{color:"#ece7dd"}},y1:{beginAtZero:true,position:"right",grid:{drawOnChartArea:false},ticks:{callback:v=>v+"%"}}}}})}
 function doughnut(id,labels,values){kill(id);charts[id]=new Chart(document.getElementById(id),{type:"doughnut",data:{labels,datasets:[{data:values,backgroundColor:[GREEN,"#d8b56a","#b94a3f"],borderColor:"#fff",borderWidth:3,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:"60%",plugins:{legend:{position:"bottom",align:"center"},datalabels:{formatter:(v,c)=>{const t=c.dataset.data.reduce((a,b)=>a+b,0);return t?Math.round(v/t*100)+"%":""},color:"#fff",font:{weight:"800",size:11}}}}})}
@@ -285,7 +274,7 @@ function fillOutletTableSelector(rows){
   names.forEach(n=>{const o=document.createElement("option");o.value=n;o.textContent=n;e.appendChild(o)});
   e.value=names.includes(current)?current:"ALL";
 }
-function renderTables(){
+function renderTables(){const scope=document.getElementById("activeScopeNote");if(scope)scope.textContent="Category: "+(document.getElementById("category").value||"ALL");
   currentManagerRows=buildManagerRows();
   const allOutletRows=buildOutletRows();
   fillOutletTableSelector(allOutletRows);
@@ -306,13 +295,13 @@ function ensureActiveMonthNotInPeriod(){
   if(e.value===activeMonthValue)e.value="MTD";
 }
 
-function init(payload){D=payload;F=D.facts;LAST=new Date(D.meta.lastDataDate+"T00:00:00");MONTH_START=new Date(LAST.getFullYear(),LAST.getMonth(),1);YEAR_START=new Date(LAST.getFullYear(),0,1);fillPeriodOptions();ensureActiveMonthNotInPeriod();fill("manager",unique(F.outlets,"KA Manager"));fill("segment",unique(F.outlets,"Segment"));fill("category",unique(F.sales,"Category"));document.getElementById("loader").style.display="none";document.getElementById("page").style.display="block";document.getElementById("footer").textContent=`Generated from single CSV extract • Last data date ${D.meta.lastDataDate||""}`;renderAll()}
+function init(payload){D=payload;F=D.facts;LAST=new Date(D.meta.lastDataDate+"T00:00:00");MONTH_START=new Date(LAST.getFullYear(),LAST.getMonth(),1);YEAR_START=new Date(LAST.getFullYear(),0,1);fillPeriodOptions();ensureActiveMonthNotInPeriod();fill("manager",unique(F.outlets,"KA Manager"));fill("segment",unique(F.outlets,"Segment"));fill("category",[...new Set([...unique(F.sales,"Category"),...unique(F.targets,"Category")])].sort());document.getElementById("loader").style.display="none";document.getElementById("page").style.display="block";document.getElementById("footer").textContent=`Generated from single CSV extract • Last data date ${D.meta.lastDataDate||""}`;renderAll()}
 document.getElementById("clear").onclick=()=>{["manager","segment","category"].forEach(id=>document.getElementById(id).value="ALL");document.getElementById("period").value="MTD";const ots=document.getElementById("outletTableSelector");if(ots)ots.value="ALL";renderAll()};
 ["period","category"].forEach(id=>document.getElementById(id).onchange=renderAll);
 ["manager","segment"].forEach(id=>document.getElementById(id).onchange=()=>{const ots=document.getElementById("outletTableSelector");if(ots)ots.value="ALL";renderAll()});document.getElementById("outletTableSelector").onchange=renderTables;
 document.getElementById("exportManager").onclick=()=>csv("KA_Manager_Volume_Performance.csv",currentManagerRows,managerCols);
 document.getElementById("exportOutlet").onclick=()=>csv("Outlet_Volume_Performance.csv",currentOutletRows,outletCols);
 document.getElementById("exportZeroSales").onclick=()=>csv("Zero_Sales_Outlets.csv",currentZeroRows,zeroCols);
-document.getElementById("csvInput").addEventListener("change",async e=>{try{const file=e.target.files&&e.target.files[0];if(!file)return;setStatus("Loading "+file.name+"...");const rows=await parseCSV(file);const payload=payloadFromSingleCSV(rows);setStatus("Loaded successfully.","success");init(payload)}catch(err){console.error(err);setStatus(err.message,"error")}});
+document.getElementById("csvInput").addEventListener("change",async e=>{try{const file=e.target.files&&e.target.files[0];if(!file)return;setStatus("Loading "+file.name+"...");const rows=await parseCSV(file);const payload=payloadFromSingleCSV(rows);setStatus("Loaded successfully.","success");init(payload)}catch(err){console.error(err);setStatus("Could not load CSV: "+err.message,"error")}});
 </script>
 </body></html>
