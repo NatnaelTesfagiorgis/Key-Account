@@ -48,7 +48,7 @@ table{width:100%;border-collapse:separate;border-spacing:0;white-space:nowrap;fo
     <h1>Load KA Dashboard Extract</h1>
     <p>Select <strong>ka_dashboard_extract.csv</strong> created by the Python data extractor.</p>
     <label class="file-btn">Choose ka_dashboard_extract.csv<input id="csvInput" type="file" accept=".csv,text/csv"></label>
-    <div id="status" class="status">Data loader moved to bottom. Choose ka_dashboard_extract.csv here only when manual loading is needed.</div>
+    <div id="status" class="status">Manual HTML loader: choose ka_dashboard_extract.csv here. In Streamlit, use the Data File Loader below the dashboard.</div>
   </div>
 </div>
 
@@ -114,7 +114,45 @@ const sum=(rows,key)=>rows.reduce((a,r)=>a+(val(r[key])||0),0);
 function normCat(v){return String(v||"").trim().toLowerCase();}
 function bool(v){return v===true||["true","yes","y","1"].includes(String(v??"").trim().toLowerCase())}
 function setStatus(msg,kind=""){const e=document.getElementById("status");e.textContent=msg;e.className="status "+kind}
-function parseCSV(file){return new Promise((resolve,reject)=>Papa.parse(file,{header:true,skipEmptyLines:true,dynamicTyping:true,complete:r=>resolve(r.data),error:reject}))}
+function parseCell(v){
+  if(v===undefined || v===null) return "";
+  const s=String(v).trim();
+  if(s==="") return "";
+  const n=Number(s.replace(/,/g,""));
+  if(Number.isFinite(n) && /^-?[\d,]+(\.\d+)?$/.test(s)) return n;
+  return s;
+}
+function csvTextToRows(text){
+  const rows=[], row=[];let cell="",q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i], n=text[i+1];
+    if(q){
+      if(c==='"' && n==='"'){cell+='"';i++}
+      else if(c==='"'){q=false}
+      else cell+=c;
+    }else{
+      if(c==='"') q=true;
+      else if(c===','){row.push(cell);cell=""}
+      else if(c==='\n'){
+        row.push(cell);cell="";
+        if(row.some(x=>String(x).trim()!=="")) rows.push(row.splice(0));
+      }else if(c!=='\r') cell+=c;
+    }
+  }
+  row.push(cell);
+  if(row.some(x=>String(x).trim()!=="")) rows.push(row);
+  if(!rows.length) return [];
+  const headers=rows[0].map(h=>String(h||"").replace(/^\ufeff/,"").trim());
+  return rows.slice(1).map(r=>{
+    const o={};
+    headers.forEach((h,i)=>{o[h]=parseCell(r[i])});
+    return o;
+  });
+}
+async function parseCSV(file){
+  const text=await file.text();
+  return csvTextToRows(text);
+}
 function cleanRow(r){const o={};Object.keys(r).forEach(k=>{if(k!=="__table__" && k!=="__empty__" && r[k]!==null && r[k]!==undefined && String(r[k])!=="")o[k]=r[k]});return o}
 function payloadFromSingleCSV(rows){
   const facts={outlets:[],sales:[],targets:[],visits:[],execution:[],calendar:[],kpiConfig:[]}, meta={}, kpiTargets={}, seenTables=new Set();

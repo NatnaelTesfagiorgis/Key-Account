@@ -1,23 +1,17 @@
-# KA Dashboard v22 - Clean Upload + Draught Target Fix
+# KA Dashboard v24 - Upload Population Fixed
 
-This is a clean complete package.
+This package fixes the issue where the uploaded extract was not populating.
 
-What is fixed:
-- CSV upload/population fixed using the working Streamlit app.
-- SKU filter removed.
-- Top Outlet filter removed.
-- Outlet selector remains only in Outlet Vol. Perf. table.
-- Active month appears only as MTD.
-- Category matching is trimmed and case-insensitive.
-- Category dropdown is built from both Sales and Targets.
-- Visuals trust the extract values:
-  - Actual Volume
-  - Full Month Target
-- No extra visual-layer re-conversion is applied.
+Fixes:
+- Streamlit uploader is still at the bottom, but the uploaded file is processed in the same run.
+- Streamlit injects the payload into HTML immediately, without waiting for browser load timing issues.
+- Manual standalone HTML upload no longer depends on PapaParse/CDN; it has a built-in CSV parser.
+- Employee ID mapping extractor is included.
+- Visuals trust the already-correct extract values.
+- SKU and top Outlet filters remain removed.
 
-For Netsanet / Employee ID 215:
-- Select Category = Draught.
-- Expected card:
-  - Actual around 1,273
-  - Target around 1,000 for MTD, if elapsed/full working days are 12/23.
-- If Category = ALL, the target includes Bottle + Draught.
+Run:
+```powershell
+python build_ka_dashboard_excel_to_single_csv.py
+python -m streamlit run streamlit_app.py
+```
