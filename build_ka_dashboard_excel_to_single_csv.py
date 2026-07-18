@@ -94,6 +94,14 @@ def crate_equivalent_factor(sku: str, category: str) -> float:
     return 1.0
 
 
+def target_crate_equivalent_factor(category: str) -> float:
+    """Return hardcoded target conversion factor from Sales_Target Category to crate equivalent."""
+    category_text = str(category or "").strip().lower()
+    if category_text in {"draught", "draft"}:
+        return KEG_TO_CRATE_EQUIVALENT
+    return 1.0
+
+
 # =========================================================
 # GENERAL HELPERS
 # =========================================================
@@ -615,6 +623,18 @@ def prepare_sales_target(
     prepared["Category"] = prepared["Category"].replace(
         "",
         "Unspecified",
+    )
+
+    # Convert Sales_Target to crate equivalent in code.
+    # Bottle category targets are already entered as crate quantity.
+    # Draught category targets are entered as keg count and converted:
+    # 1 x 30L keg = 30 / 7.92 = 3.787878 crate equivalent.
+    prepared["Raw Full Month Target"] = prepared["Full Month Target"]
+    prepared["Target Crate Equivalent Factor"] = prepared["Category"].apply(
+        target_crate_equivalent_factor
+    )
+    prepared["Full Month Target"] = (
+        prepared["Raw Full Month Target"] * prepared["Target Crate Equivalent Factor"]
     )
 
     # Date is now mandatory, so the fallback is no longer used.
@@ -1706,6 +1726,10 @@ def build_dashboard_extract() -> dict[str, Any]:
             "crateEquivalentBasis": (
                 "Bottle/crate products = 1.0. Keg/draught products = 30L keg / "
                 "7.92L bottle crate = 3.787878 crate equivalent."
+            ),
+            "targetUnitBasis": (
+                "Sales_Target Bottle category is treated as crate. Sales_Target Draught category "
+                "is treated as keg count and converted to crate equivalent."
             ),
         },
         "filters": filters,
