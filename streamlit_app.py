@@ -10,6 +10,7 @@ import streamlit.components.v1 as components
 
 BASE_FOLDER = Path(__file__).resolve().parent
 DEFAULT_CSV_FILE = BASE_FOLDER / "ka_dashboard_extract.csv"
+UPLOADED_CSV_FILE = BASE_FOLDER / "_uploaded_ka_dashboard_extract.csv"
 HTML_FILE = BASE_FOLDER / "KA_Dashboard_Single_CSV_Loader.html"
 
 
@@ -43,7 +44,6 @@ def load_payload(csv_file_text: str) -> dict:
     }
     meta = {}
     kpi_targets = {}
-
     seen_tables = set()
 
     for row in df.to_dict("records"):
@@ -69,11 +69,7 @@ def load_payload(csv_file_text: str) -> dict:
     if missing:
         raise ValueError("Missing table section in CSV: " + ", ".join(missing))
 
-    return {
-        "facts": facts,
-        "meta": meta,
-        "kpiTargets": kpi_targets,
-    }
+    return {"facts": facts, "meta": meta, "kpiTargets": kpi_targets}
 
 
 def render_dashboard(payload: dict) -> None:
@@ -88,15 +84,14 @@ def render_dashboard(payload: dict) -> None:
         "</script>\n"
     )
     html = html.replace("</body>", injection + "</body>")
-
-    components.html(html, height=2800, scrolling=True)
+    components.html(html, height=2850, scrolling=True)
 
 
 st.set_page_config(
     page_title="KA Performance Dashboard",
     page_icon="🍺",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 st.markdown(
@@ -111,36 +106,44 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-with st.sidebar:
-    st.title("KA Dashboard")
-    st.caption("Single CSV version")
+if "csv_file_path" not in st.session_state:
+    st.session_state.csv_file_path = str(DEFAULT_CSV_FILE)
 
-    csv_file_input = st.text_input(
-        "CSV file path",
-        value=str(DEFAULT_CSV_FILE),
-        help="This should point to ka_dashboard_extract.csv",
-    )
-
-    uploaded = st.file_uploader(
-        "Or upload ka_dashboard_extract.csv",
-        type=["csv"],
-    )
-
-    if st.button("Refresh", use_container_width=True):
-        st.cache_data.clear()
-        st.rerun()
-
-
+load_error = None
 try:
-    if uploaded is not None:
-        temp_file = BASE_FOLDER / "_uploaded_ka_dashboard_extract.csv"
-        temp_file.write_bytes(uploaded.getvalue())
-        payload = load_payload(str(temp_file))
-    else:
-        payload = load_payload(csv_file_input)
-
+    payload = load_payload(st.session_state.csv_file_path)
     render_dashboard(payload)
-
 except Exception as exc:
+    load_error = exc
     st.error("Dashboard could not be loaded from the single CSV.")
     st.exception(exc)
+
+st.divider()
+st.markdown("### Data File Loader")
+st.caption("The loader is now at the bottom. The dashboard loads from `ka_dashboard_extract.csv` by default.")
+
+csv_file_input = st.text_input(
+    "CSV file path",
+    value=st.session_state.csv_file_path,
+    help="This should point to ka_dashboard_extract.csv",
+)
+
+uploaded = st.file_uploader(
+    "Or upload ka_dashboard_extract.csv",
+    type=["csv"],
+)
+
+col1, col2 = st.columns([1, 5])
+with col1:
+    refresh_clicked = st.button("Refresh / Load", use_container_width=True)
+
+if uploaded is not None:
+    UPLOADED_CSV_FILE.write_bytes(uploaded.getvalue())
+    st.session_state.csv_file_path = str(UPLOADED_CSV_FILE)
+    st.cache_data.clear()
+    st.rerun()
+
+if refresh_clicked:
+    st.session_state.csv_file_path = csv_file_input
+    st.cache_data.clear()
+    st.rerun()
