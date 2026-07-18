@@ -58,7 +58,6 @@ table{width:100%;border-collapse:separate;border-spacing:0;white-space:nowrap;fo
 <div class="filter"><label>Date / Period</label><select id="period"><option value="MTD">MTD</option><option value="YTD">YTD</option></select></div>
 <div class="filter"><label>KA Manager</label><select id="manager"></select></div>
 <div class="filter"><label>Segment</label><select id="segment"></select></div>
-<div class="filter"><label>Outlet</label><select id="outlet"></select></div>
 <div class="filter"><label>SKU</label><select id="sku"></select></div>
 <div class="filter"><label>Category</label><select id="category"></select></div>
 <button id="clear" class="btn">↻ Clear Filters</button>
@@ -135,16 +134,25 @@ function monthKey(v){const d=dateObj(v);return d.getFullYear()+"-"+String(d.getM
 function monthLabelFromKey(k){const [y,m]=k.split("-").map(Number);return new Date(y,m-1,1).toLocaleString(undefined,{month:"short",year:"numeric"})}
 function availableMonthKeys(){
   const keys=new Set();
-  [...F.sales,...F.targets.map(r=>({"Date":r["Target Month"]})),...F.visits,...F.execution].forEach(r=>{if(r.Date)keys.add(monthKey(r.Date))});
+
+  // Use all date sources that can define a period option.
+  [...F.sales,...F.targets.map(r=>({"Date":r["Target Month"]})),...F.visits,...F.execution].forEach(r=>{
+    if(r.Date){
+      const d=dateObj(r.Date);
+      if(!isNaN(d)) keys.add(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"));
+    }
+  });
+
   return [...keys].sort();
 }
+
 function fillPeriodOptions(){
   const e=document.getElementById("period");
   e.innerHTML='<option value="MTD">MTD</option><option value="YTD">YTD</option>';
 
-  // The active month is represented by MTD only.
-  // Example: if LAST is in July, do not show Jul 2026 as a separate option.
-  const activeMonthKey = monthKey(LAST);
+  // The active month is represented only by MTD.
+  // Example: if latest data date is in July, Jul 2026 is excluded from the dropdown.
+  const activeMonthKey = LAST.getFullYear()+"-"+String(LAST.getMonth()+1).padStart(2,"0");
 
   availableMonthKeys()
     .filter(k => k !== activeMonthKey)
@@ -154,9 +162,19 @@ function fillPeriodOptions(){
       o.textContent=monthLabelFromKey(k);
       e.appendChild(o);
     });
+});
 }
 function fill(id,vals,label=v=>v,value=v=>v){const e=document.getElementById(id);e.innerHTML='<option value="ALL">All</option>';vals.forEach(v=>{const o=document.createElement("option");o.value=value(v);o.textContent=label(v);e.appendChild(o)})}
-function state(){return {period:document.getElementById("period").value,manager:document.getElementById("manager").value,segment:document.getElementById("segment").value,outlet:"ALL",sku:document.getElementById("sku").value,category:document.getElementById("category").value}}
+function state(){
+  return {
+    period:document.getElementById("period").value,
+    manager:document.getElementById("manager").value,
+    segment:document.getElementById("segment").value,
+    outlet:"ALL",
+    sku:document.getElementById("sku").value,
+    category:document.getElementById("category").value
+  };
+}}
 function inRange(v,start,end){const d=dateObj(v);return d>=start&&d<=end}
 function monthEnd(d){return new Date(d.getFullYear(),d.getMonth()+1,0)}
 function monthStartFromString(v){const d=dateObj(v);return new Date(d.getFullYear(),d.getMonth(),1)}
@@ -277,8 +295,17 @@ function renderTables(){
   table("zeroSalesTable",currentZeroRows,zeroCols);
 }
 function csv(name,rows,cols){const q=v=>'"'+String(v??"").replaceAll('"','""')+'"';const out=[cols.map(c=>q(c[1])).join(","),...rows.map(r=>cols.map(c=>q(r[c[0]])).join(","))].join("\n");const b=new Blob(["\ufeff"+out],{type:"text/csv"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;a.click();URL.revokeObjectURL(a.href)}
-function renderAll(){renderCards();buildCharts();renderTables()}
-function init(payload){D=payload;F=D.facts;LAST=new Date(D.meta.lastDataDate+"T00:00:00");MONTH_START=new Date(LAST.getFullYear(),LAST.getMonth(),1);YEAR_START=new Date(LAST.getFullYear(),0,1);fillPeriodOptions();fill("manager",unique(F.outlets,"KA Manager"));fill("segment",unique(F.outlets,"Segment"));fill("sku",unique(F.sales,"SKU"));fill("category",unique(F.sales,"Category"));document.getElementById("loader").style.display="none";document.getElementById("page").style.display="block";document.getElementById("footer").textContent=`Generated from single CSV extract • Last data date ${D.meta.lastDataDate||""}`;renderAll()}
+function renderAll(){removeActiveMonthOption();renderCards();buildCharts();renderTables()}
+
+function removeActiveMonthOption(){
+  const e=document.getElementById("period");
+  if(!e || !LAST) return;
+  const activeMonthValue="MONTH:"+LAST.getFullYear()+"-"+String(LAST.getMonth()+1).padStart(2,"0");
+  [...e.options].forEach(o=>{if(o.value===activeMonthValue)o.remove()});
+  if(e.value===activeMonthValue)e.value="MTD";
+}
+
+function init(payload){D=payload;F=D.facts;LAST=new Date(D.meta.lastDataDate+"T00:00:00");MONTH_START=new Date(LAST.getFullYear(),LAST.getMonth(),1);YEAR_START=new Date(LAST.getFullYear(),0,1);fillPeriodOptions();removeActiveMonthOption();fill("manager",unique(F.outlets,"KA Manager"));fill("segment",unique(F.outlets,"Segment"));fill("sku",unique(F.sales,"SKU"));fill("category",unique(F.sales,"Category"));document.getElementById("loader").style.display="none";document.getElementById("page").style.display="block";document.getElementById("footer").textContent=`Generated from single CSV extract • Last data date ${D.meta.lastDataDate||""}`;renderAll()}
 document.getElementById("clear").onclick=()=>{["manager","segment","sku","category"].forEach(id=>document.getElementById(id).value="ALL");document.getElementById("period").value="MTD";const ots=document.getElementById("outletTableSelector");if(ots)ots.value="ALL";renderAll()};
 ["period","sku","category"].forEach(id=>document.getElementById(id).onchange=renderAll);
 ["manager","segment"].forEach(id=>document.getElementById(id).onchange=()=>{const ots=document.getElementById("outletTableSelector");if(ots)ots.value="ALL";renderAll()});document.getElementById("outletTableSelector").onchange=renderTables;
