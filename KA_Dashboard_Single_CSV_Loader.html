@@ -129,7 +129,18 @@ function availableMonthKeys(){
 function fillPeriodOptions(){
   const e=document.getElementById("period");
   e.innerHTML='<option value="MTD">MTD</option><option value="YTD">YTD</option>';
-  availableMonthKeys().forEach(k=>{const o=document.createElement("option");o.value="MONTH:"+k;o.textContent=monthLabelFromKey(k);e.appendChild(o)});
+
+  // Add closed/previous months only.
+  // The active month is represented by MTD, so we do not duplicate it as a separate month option.
+  const activeMonthKey = monthKey(LAST);
+  availableMonthKeys()
+    .filter(k => k !== activeMonthKey)
+    .forEach(k=>{
+      const o=document.createElement("option");
+      o.value="MONTH:"+k;
+      o.textContent=monthLabelFromKey(k);
+      e.appendChild(o);
+    });
 }
 function fill(id,vals,label=v=>v,value=v=>v){const e=document.getElementById(id);e.innerHTML='<option value="ALL">All</option>';vals.forEach(v=>{const o=document.createElement("option");o.value=value(v);o.textContent=label(v);e.appendChild(o)})}
 function state(){return {period:document.getElementById("period").value,manager:document.getElementById("manager").value,segment:document.getElementById("segment").value,outlet:document.getElementById("outlet").value,sku:document.getElementById("sku").value,category:document.getElementById("category").value}}
