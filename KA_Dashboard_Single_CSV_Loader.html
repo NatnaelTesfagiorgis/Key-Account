@@ -24,7 +24,7 @@ body{margin:0;font-family:"Segoe UI Variable Text","Segoe UI",Arial,sans-serif;b
 .file-btn{display:inline-block;margin-top:10px;border-radius:12px;padding:12px 18px;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#fff;font-weight:850;cursor:pointer;box-shadow:0 10px 20px rgba(201,139,8,.24)}
 .file-btn input{display:none}.status{margin-top:16px;font-size:12px;font-weight:800;color:var(--muted)}.status.error{color:var(--red)}.status.success{color:var(--green)}
 .page{max-width:1840px;margin:auto;padding:16px;display:none}.topbar{display:flex;align-items:center;gap:22px;min-height:92px;padding:14px 24px;border-radius:22px;background:linear-gradient(120deg,var(--navy),var(--navy2) 58%,#473106);box-shadow:var(--shadow)}
-.logo-box{width:190px;height:62px;border-right:2px solid rgba(240,165,26,.75);padding-right:22px;display:flex;align-items:center;justify-content:center;color:#fff8ea;font-weight:900;letter-spacing:.08em}
+.logo-box{width:250px;height:70px;border-right:2px solid rgba(240,165,26,.75);padding-right:24px;display:flex;align-items:center;justify-content:center;color:#fff8ea;font-size:32px;font-weight:950;letter-spacing:.10em}
 .topbar h1{margin:0;font-size:34px;font-weight:780;letter-spacing:-.7px;color:#fffaf0}
 .filters{display:grid;grid-template-columns:1.1fr repeat(5,1fr) 150px;gap:12px;margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.92);box-shadow:var(--shadow-soft)}
 .filter label{display:block;margin-bottom:6px;font-size:10.5px;font-weight:850;letter-spacing:.085em;text-transform:uppercase;color:#5d4b2b}
@@ -48,7 +48,7 @@ table{width:100%;border-collapse:separate;border-spacing:0;white-space:nowrap;fo
     <h1>Load KA Dashboard Extract</h1>
     <p>Select <strong>ka_dashboard_extract.csv</strong> created by the Python data extractor.</p>
     <label class="file-btn">Choose ka_dashboard_extract.csv<input id="csvInput" type="file" accept=".csv,text/csv"></label>
-    <div id="status" class="status">Waiting for CSV file...</div>
+    <div id="status" class="status">Waiting for CSV file... Choose ka_dashboard_extract.csv using the button below.</div>
   </div>
 </div>
 
@@ -75,7 +75,19 @@ table{width:100%;border-collapse:separate;border-spacing:0;white-space:nowrap;fo
   <article class="panel"><h2>Volume Summary</h2><div class="chart"><canvas id="volumeSummary"></canvas></div></article>
 </section>
 <section class="table-panel"><div class="toolbar"><strong class="table-title">KA Manager Vol. Perf.</strong><button id="exportManager" class="btn">⇩ Export</button></div><div class="table-wrap"><table id="managerTable"></table></div></section>
-<section class="table-panel"><div class="toolbar"><strong class="table-title">Outlet Vol. Perf.</strong><button id="exportOutlet" class="btn">⇩ Export</button></div><div class="table-wrap"><table id="outletTable"></table></div></section>
+<section class="table-panel">
+  <div class="toolbar">
+    <strong class="table-title">Outlet Vol. Perf.</strong>
+    <div style="display:flex;align-items:end;gap:10px;flex-wrap:wrap">
+      <div class="filter" style="min-width:300px;margin:0">
+        <label>Outlet Table Selector</label>
+        <select id="outletTableSelector"><option value="ALL">All outlets</option></select>
+      </div>
+      <button id="exportOutlet" class="btn">⇩ Export</button>
+    </div>
+  </div>
+  <div class="table-wrap"><table id="outletTable"></table></div>
+</section>
 <section class="table-panel"><div class="toolbar"><strong class="table-title">Zero-Sales Outlets</strong><button id="exportZeroSales" class="btn">⇩ Export</button></div><div class="table-wrap"><table id="zeroSalesTable"></table></div></section>
 <div id="footer" class="footer"></div>
 </div>
@@ -144,16 +156,7 @@ function fillPeriodOptions(){
     });
 }
 function fill(id,vals,label=v=>v,value=v=>v){const e=document.getElementById(id);e.innerHTML='<option value="ALL">All</option>';vals.forEach(v=>{const o=document.createElement("option");o.value=value(v);o.textContent=label(v);e.appendChild(o)})}
-function state(){
-  return {
-    period:document.getElementById("period").value,
-    manager:document.getElementById("manager").value,
-    segment:document.getElementById("segment").value,
-    outlet:"ALL",
-    sku:document.getElementById("sku").value,
-    category:document.getElementById("category").value
-  };
-}}
+function state(){return {period:document.getElementById("period").value,manager:document.getElementById("manager").value,segment:document.getElementById("segment").value,outlet:"ALL",sku:document.getElementById("sku").value,category:document.getElementById("category").value}}
 function inRange(v,start,end){const d=dateObj(v);return d>=start&&d<=end}
 function monthEnd(d){return new Date(d.getFullYear(),d.getMonth()+1,0)}
 function monthStartFromString(v){const d=dateObj(v);return new Date(d.getFullYear(),d.getMonth(),1)}
@@ -252,37 +255,33 @@ function table(id,rows,cols){document.getElementById(id).innerHTML=`<thead><tr>$
       return `<td class="${c[2]==="t"?"left":""}${vc}">${cell(r[c[0]],c[2])}</td>`}).join("")}</tr>`).join("")}</tbody>`}
 let currentManagerRows=[],currentOutletRows=[],currentZeroRows=[];
 
-function selectedOutletTableName(){
-  const e=document.getElementById("outletTableSelector");
-  return e ? e.value : "ALL";
-}
-
+function selectedOutletTableName(){const e=document.getElementById("outletTableSelector");return e?e.value:"ALL"}
 function fillOutletTableSelector(rows){
-  let e=document.getElementById("outletTableSelector");
-  if(!e) return;
-
-  const current=e.value || "ALL";
+  const e=document.getElementById("outletTableSelector");
+  if(!e)return;
+  const current=e.value||"ALL";
   const names=[...new Set(rows.map(r=>r["Outlet Name"]).filter(v=>v!==undefined&&v!==null&&String(v).trim()!==""))].sort();
-
   e.innerHTML='<option value="ALL">All outlets</option>';
-  names.forEach(n=>{
-    const o=document.createElement("option");
-    o.value=n;
-    o.textContent=n;
-    e.appendChild(o);
-  });
-
-  e.value = names.includes(current) ? current : "ALL";
+  names.forEach(n=>{const o=document.createElement("option");o.value=n;o.textContent=n;e.appendChild(o)});
+  e.value=names.includes(current)?current:"ALL";
 }
-
-function renderTables(){currentManagerRows=buildManagerRows();currentOutletRows=buildOutletRows();currentZeroRows=buildZeroRows();table("managerTable",currentManagerRows,managerCols);table("outletTable",currentOutletRows,outletCols);table("zeroSalesTable",currentZeroRows,zeroCols)}
+function renderTables(){
+  currentManagerRows=buildManagerRows();
+  const allOutletRows=buildOutletRows();
+  fillOutletTableSelector(allOutletRows);
+  const selectedOutletName=selectedOutletTableName();
+  currentOutletRows=selectedOutletName==="ALL"?allOutletRows:allOutletRows.filter(r=>r["Outlet Name"]===selectedOutletName);
+  currentZeroRows=currentOutletRows.filter(r=>(Number(r["MTD Actual"])||0)===0).map(r=>({"KA Manager":r["KA Manager"],"Outlet Name":r["Outlet Name"],"Outlet ID":r["Outlet ID"]}));
+  table("managerTable",currentManagerRows,managerCols);
+  table("outletTable",currentOutletRows,outletCols);
+  table("zeroSalesTable",currentZeroRows,zeroCols);
+}
 function csv(name,rows,cols){const q=v=>'"'+String(v??"").replaceAll('"','""')+'"';const out=[cols.map(c=>q(c[1])).join(","),...rows.map(r=>cols.map(c=>q(r[c[0]])).join(","))].join("\n");const b=new Blob(["\ufeff"+out],{type:"text/csv"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;a.click();URL.revokeObjectURL(a.href)}
-function refreshOutletOptions(){const s=state(),cur=document.getElementById("outlet").value;const vals=F.outlets.filter(r=>(s.manager==="ALL"||r["KA Manager"]===s.manager)&&(s.segment==="ALL"||r.Segment===s.segment));fill("outlet",vals,v=>v["Outlet ID"]+" — "+v["Outlet Name"],v=>v["Outlet ID"]);if(vals.some(v=>v["Outlet ID"]===cur))document.getElementById("outlet").value=cur}
 function renderAll(){renderCards();buildCharts();renderTables()}
-function init(payload){D=payload;F=D.facts;LAST=new Date(D.meta.lastDataDate+"T00:00:00");MONTH_START=new Date(LAST.getFullYear(),LAST.getMonth(),1);YEAR_START=new Date(LAST.getFullYear(),0,1);fillPeriodOptions();fill("manager",unique(F.outlets,"KA Manager"));fill("segment",unique(F.outlets,"Segment"));fill("outlet",F.outlets,v=>v["Outlet ID"]+" — "+v["Outlet Name"],v=>v["Outlet ID"]);fill("sku",unique(F.sales,"SKU"));fill("category",unique(F.sales,"Category"));document.getElementById("loader").style.display="none";document.getElementById("page").style.display="block";document.getElementById("footer").textContent=`Generated from single CSV extract • Last data date ${D.meta.lastDataDate||""}`;renderAll()}
-document.getElementById("clear").onclick=()=>{["manager","segment","sku","category"].forEach(id=>document.getElementById(id).value="ALL");const ots=document.getElementById("outletTableSelector");if(ots)ots.value="ALL";document.getElementById("period").value="MTD";refreshOutletOptions();renderAll()};
-["period","outlet","sku","category"].forEach(id=>document.getElementById(id).onchange=renderAll);
-["manager","segment"].forEach(id=>document.getElementById(id).onchange=()=>{refreshOutletOptions();renderAll()});
+function init(payload){D=payload;F=D.facts;LAST=new Date(D.meta.lastDataDate+"T00:00:00");MONTH_START=new Date(LAST.getFullYear(),LAST.getMonth(),1);YEAR_START=new Date(LAST.getFullYear(),0,1);fillPeriodOptions();fill("manager",unique(F.outlets,"KA Manager"));fill("segment",unique(F.outlets,"Segment"));fill("sku",unique(F.sales,"SKU"));fill("category",unique(F.sales,"Category"));document.getElementById("loader").style.display="none";document.getElementById("page").style.display="block";document.getElementById("footer").textContent=`Generated from single CSV extract • Last data date ${D.meta.lastDataDate||""}`;renderAll()}
+document.getElementById("clear").onclick=()=>{["manager","segment","sku","category"].forEach(id=>document.getElementById(id).value="ALL");document.getElementById("period").value="MTD";const ots=document.getElementById("outletTableSelector");if(ots)ots.value="ALL";renderAll()};
+["period","sku","category"].forEach(id=>document.getElementById(id).onchange=renderAll);
+["manager","segment"].forEach(id=>document.getElementById(id).onchange=()=>{const ots=document.getElementById("outletTableSelector");if(ots)ots.value="ALL";renderAll()});document.getElementById("outletTableSelector").onchange=renderTables;
 document.getElementById("exportManager").onclick=()=>csv("KA_Manager_Volume_Performance.csv",currentManagerRows,managerCols);
 document.getElementById("exportOutlet").onclick=()=>csv("Outlet_Volume_Performance.csv",currentOutletRows,outletCols);
 document.getElementById("exportZeroSales").onclick=()=>csv("Zero_Sales_Outlets.csv",currentZeroRows,zeroCols);
