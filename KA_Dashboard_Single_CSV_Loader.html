@@ -130,9 +130,10 @@ function fillPeriodOptions(){
   const e=document.getElementById("period");
   e.innerHTML='<option value="MTD">MTD</option><option value="YTD">YTD</option>';
 
-  // Add closed/previous months only.
-  // The active month is represented by MTD, so we do not duplicate it as a separate month option.
+  // The active month is represented by MTD only.
+  // Example: if LAST is in July, do not show Jul 2026 as a separate option.
   const activeMonthKey = monthKey(LAST);
+
   availableMonthKeys()
     .filter(k => k !== activeMonthKey)
     .forEach(k=>{
@@ -155,6 +156,14 @@ function periodBounds(p){
     return {start,end};
   }
   return {start:p==="YTD"?YEAR_START:MONTH_START,end:LAST};
+}
+
+function normalizeActiveMonthPeriod(){
+  const e=document.getElementById("period");
+  const activeMonthValue = "MONTH:" + monthKey(LAST);
+  if(e && e.value === activeMonthValue){
+    e.value = "MTD";
+  }
 }
 function calendarRows(start,end){return F.calendar.filter(r=>inRange(r.Date,start,end))}
 function workingDays(start,end){return calendarRows(start,end).filter(r=>bool(r["Is Working Day"])).length}
