@@ -58,7 +58,6 @@ table{width:100%;border-collapse:separate;border-spacing:0;white-space:nowrap;fo
 <div class="filter"><label>Date / Period</label><select id="period"><option value="MTD">MTD</option><option value="YTD">YTD</option></select></div>
 <div class="filter"><label>KA Manager</label><select id="manager"></select></div>
 <div class="filter"><label>Segment</label><select id="segment"></select></div>
-<div class="filter"><label>SKU</label><select id="sku"></select></div>
 <div class="filter"><label>Category</label><select id="category"></select></div>
 <button id="clear" class="btn">↻ Clear Filters</button>
 </section>
@@ -157,7 +156,7 @@ function state(){
     manager:document.getElementById("manager").value,
     segment:document.getElementById("segment").value,
     outlet:"ALL",
-    sku:document.getElementById("sku").value,
+    sku:"ALL",
     category:document.getElementById("category").value
   };
 }
@@ -290,9 +289,9 @@ function ensureActiveMonthNotInPeriod(){
   if(e.value===activeMonthValue)e.value="MTD";
 }
 
-function init(payload){D=payload;F=D.facts;LAST=new Date(D.meta.lastDataDate+"T00:00:00");MONTH_START=new Date(LAST.getFullYear(),LAST.getMonth(),1);YEAR_START=new Date(LAST.getFullYear(),0,1);fillPeriodOptions();ensureActiveMonthNotInPeriod();fill("manager",unique(F.outlets,"KA Manager"));fill("segment",unique(F.outlets,"Segment"));fill("sku",unique(F.sales,"SKU"));fill("category",unique(F.sales,"Category"));document.getElementById("loader").style.display="none";document.getElementById("page").style.display="block";document.getElementById("footer").textContent=`Generated from single CSV extract • Last data date ${D.meta.lastDataDate||""}`;renderAll()}
-document.getElementById("clear").onclick=()=>{["manager","segment","sku","category"].forEach(id=>document.getElementById(id).value="ALL");document.getElementById("period").value="MTD";const ots=document.getElementById("outletTableSelector");if(ots)ots.value="ALL";renderAll()};
-["period","sku","category"].forEach(id=>document.getElementById(id).onchange=renderAll);
+function init(payload){D=payload;F=D.facts;LAST=new Date(D.meta.lastDataDate+"T00:00:00");MONTH_START=new Date(LAST.getFullYear(),LAST.getMonth(),1);YEAR_START=new Date(LAST.getFullYear(),0,1);fillPeriodOptions();ensureActiveMonthNotInPeriod();fill("manager",unique(F.outlets,"KA Manager"));fill("segment",unique(F.outlets,"Segment"));fill("category",unique(F.sales,"Category"));document.getElementById("loader").style.display="none";document.getElementById("page").style.display="block";document.getElementById("footer").textContent=`Generated from single CSV extract • Last data date ${D.meta.lastDataDate||""}`;renderAll()}
+document.getElementById("clear").onclick=()=>{["manager","segment","category"].forEach(id=>document.getElementById(id).value="ALL");document.getElementById("period").value="MTD";const ots=document.getElementById("outletTableSelector");if(ots)ots.value="ALL";renderAll()};
+["period","category"].forEach(id=>document.getElementById(id).onchange=renderAll);
 ["manager","segment"].forEach(id=>document.getElementById(id).onchange=()=>{const ots=document.getElementById("outletTableSelector");if(ots)ots.value="ALL";renderAll()});document.getElementById("outletTableSelector").onchange=renderTables;
 document.getElementById("exportManager").onclick=()=>csv("KA_Manager_Volume_Performance.csv",currentManagerRows,managerCols);
 document.getElementById("exportOutlet").onclick=()=>csv("Outlet_Volume_Performance.csv",currentOutletRows,outletCols);
