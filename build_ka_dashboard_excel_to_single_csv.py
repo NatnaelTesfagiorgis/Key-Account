@@ -395,6 +395,106 @@ def prepare_outlet_master(excel: pd.ExcelFile) -> pd.DataFrame:
     return prepared
 
 
+
+def build_employee_owner_dim(outlet: pd.DataFrame) -> pd.DataFrame:
+    """
+    Builds the official employee-to-KA-manager ownership map.
+
+    Option 2 rule:
+        Employee ID is the ownership key.
+
+    If the same Employee ID appears under more than one KA Manager in Outlet_Master,
+    the most frequent KA Manager is used. This prevents a few stale outlet-owner rows
+    from moving targets to the wrong manager.
+    """
+    if "Employee ID" not in outlet.columns:
+        return pd.DataFrame(columns=["Employee ID", "Employee KA Manager"])
+
+    base = outlet[
+        outlet["Employee ID"].notna()
+        & outlet["Employee ID"].astype(str).str.strip().ne("")
+        & outlet["KA Manager"].notna()
+        & outlet["KA Manager"].astype(str).str.strip().ne("")
+    ].copy()
+
+    if base.empty:
+        return pd.DataFrame(columns=["Employee ID", "Employee KA Manager"])
+
+    counts = (
+        base.groupby(["Employee ID", "KA Manager"], as_index=False)
+        .size()
+        .rename(columns={"size": "Owner Count"})
+        .sort_values(["Employee ID", "Owner Count", "KA Manager"], ascending=[True, False, True])
+    )
+
+    owner = (
+        counts.drop_duplicates("Employee ID", keep="first")
+        .rename(columns={"KA Manager": "Employee KA Manager"})
+        [["Employee ID", "Employee KA Manager"]]
+    )
+
+    return owner
+
+
+def apply_employee_owner_to_outlets(
+    outlet: pd.DataFrame,
+    employee_owner_dim: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Applies Employee ID ownership to outlet-level dimensions.
+
+    This makes actual sales, visits and execution follow the same owner rule as targets.
+    """
+    if employee_owner_dim.empty or "Employee ID" not in outlet.columns:
+        return outlet
+
+    result = outlet.merge(
+        employee_owner_dim,
+        on="Employee ID",
+        how="left",
+    )
+
+    result["Source KA Manager"] = result["KA Manager"]
+    result["KA Manager"] = result["Employee KA Manager"].fillna(result["KA Manager"])
+    result = result.drop(columns=["Employee KA Manager"], errors="ignore")
+    return result
+
+
+def apply_employee_owner_to_targets(
+    target: pd.DataFrame,
+    employee_owner_dim: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Applies Employee ID ownership to Sales_Target.
+
+    Target rows are assigned to KA Manager by Sales_Target Employee ID, not by
+    the target Outlet ID. Outlet ID is still kept for outlet-level detail, but it
+    no longer controls target ownership.
+    """
+    result = target.copy()
+
+    result["Source Employee ID"] = result.get("Employee ID")
+
+    if employee_owner_dim.empty or "Employee ID" not in result.columns:
+        result["KA Manager"] = "Unassigned"
+        result["Target Owner Mapping"] = "No Employee ID owner map"
+        return result
+
+    result = result.merge(
+        employee_owner_dim,
+        on="Employee ID",
+        how="left",
+    )
+
+    result["KA Manager"] = result["Employee KA Manager"].fillna("Unassigned")
+    result["Target Owner Mapping"] = np.where(
+        result["Employee KA Manager"].notna(),
+        "Employee ID",
+        "Unassigned Employee ID",
+    )
+    result = result.drop(columns=["Employee KA Manager"], errors="ignore")
+    return result
+
 def prepare_calendar(excel: pd.ExcelFile) -> pd.DataFrame:
     calendar = read_sheet(excel, ["Calander_MDM", "Calendar_MDM", "Calendar"])
 
@@ -538,7 +638,7 @@ def prepare_sales_target(
     first column. The month of Date determines which month each target belongs
     to, so MTD, YTD and closed-month calculations use the correct target period.
     """
-    target = read_sheet(excel, ["Sales_Target"])
+    target = read_sheet(excel, ["Sales_Target", "Sales_Targett", "Sales Target"])
 
     date_col = require_column(target, ["Date"], "Sales_Target")
     outlet_col = require_column(target, ["Outlet ID"], "Sales_Target")
@@ -1068,6 +1168,15 @@ def build_dashboard_extract() -> dict[str, Any]:
     current_month_end = current_month_start + pd.offsets.MonthEnd(0)
 
     target, target_fallback_used = prepare_sales_target(excel, latest_date)
+
+    # OPTION 2 OWNERSHIP RULE:
+    # Employee ID controls target ownership and outlet ownership.
+    # This prevents target rows from being assigned to the wrong KA Manager
+    # because of stale/different Outlet ID ownership.
+    employee_owner_dim = build_employee_owner_dim(outlet)
+    outlet = apply_employee_owner_to_outlets(outlet, employee_owner_dim)
+    target = apply_employee_owner_to_targets(target, employee_owner_dim)
+
     visit_plan = prepare_visit_plan(excel)
     visit_actual = prepare_visit_actual(excel)
     kpi_config, kpi_targets = prepare_kpi_config(excel)
@@ -1647,6 +1756,7 @@ def build_dashboard_extract() -> dict[str, Any]:
             "Outlet ID",
             "Outlet Name",
             "KA Manager",
+            "Employee ID",
             "Segment",
             "Is Active",
             "Has Fridge",
@@ -1661,11 +1771,12 @@ def build_dashboard_extract() -> dict[str, Any]:
 
     target_fact = target.merge(
         outlet_filter_dim[
-            ["Outlet ID", "Outlet Name", "KA Manager", "Segment"]
+            ["Outlet ID", "Outlet Name", "Segment"]
         ],
         on="Outlet ID",
         how="left",
     )
+    target_fact["KA Manager"] = target_fact["KA Manager"].fillna("Unassigned")
 
     visit_fact = visit_detail.copy()
     if "Outlet Name" not in visit_fact.columns:
@@ -1730,6 +1841,10 @@ def build_dashboard_extract() -> dict[str, Any]:
             "targetUnitBasis": (
                 "Sales_Target Bottle category is treated as crate. Sales_Target Draught category "
                 "is treated as keg count and converted to crate equivalent."
+            ),
+            "ownerMappingBasis": (
+                "Option 2 active: Employee ID is the ownership key. Targets are mapped to KA Manager "
+                "through Sales_Target Employee ID, not target Outlet ID."
             ),
         },
         "filters": filters,
