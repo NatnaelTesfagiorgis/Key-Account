@@ -30,7 +30,7 @@ body{margin:0;font-family:"Segoe UI Variable Text","Segoe UI",Arial,sans-serif;b
 .filter label{display:block;margin-bottom:6px;font-size:10.5px;font-weight:850;letter-spacing:.085em;text-transform:uppercase;color:#5d4b2b}
 .filter select{width:100%;height:39px;padding:9px 11px;border:1px solid #d3c6b2;border-radius:10px;background:#fff;font:650 13px "Segoe UI",Arial}
 .btn{border:0;border-radius:10px;padding:10px 16px;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#fff;font-weight:850;cursor:pointer}
-.cards{display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:11px;margin-top:12px}
+.cards{display:grid;grid-template-columns:repeat(6,minmax(150px,1fr));gap:11px;margin-top:12px}
 .card{min-height:138px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px 14px;text-align:center;box-shadow:var(--shadow-soft);position:relative;overflow:hidden}
 .card:before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:linear-gradient(90deg,var(--navy),var(--gold2))}
 .card-title{font-size:10.5px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:#4f4129}.card-value{margin:11px 0 6px;font-size:32px;font-weight:820;letter-spacing:-.55px}.card-sub{min-height:18px;font-size:11.5px;font-weight:600;color:#5c5850}.progress{height:6px;border-radius:999px;background:#ece5d8;margin-top:15px;overflow:hidden}.progress span{display:block;height:100%;border-radius:999px}
@@ -119,12 +119,32 @@ function payloadFromSingleCSV(rows){
   return {facts,meta,kpiTargets};
 }
 function unique(rows,key){return [...new Set(rows.map(r=>r[key]).filter(v=>v!==undefined&&v!==null&&String(v).trim()!==""))].sort()}
+function monthKey(v){const d=dateObj(v);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
+function monthLabelFromKey(k){const [y,m]=k.split("-").map(Number);return new Date(y,m-1,1).toLocaleString(undefined,{month:"short",year:"numeric"})}
+function availableMonthKeys(){
+  const keys=new Set();
+  [...F.sales,...F.targets.map(r=>({"Date":r["Target Month"]})),...F.visits,...F.execution].forEach(r=>{if(r.Date)keys.add(monthKey(r.Date))});
+  return [...keys].sort();
+}
+function fillPeriodOptions(){
+  const e=document.getElementById("period");
+  e.innerHTML='<option value="MTD">MTD</option><option value="YTD">YTD</option>';
+  availableMonthKeys().forEach(k=>{const o=document.createElement("option");o.value="MONTH:"+k;o.textContent=monthLabelFromKey(k);e.appendChild(o)});
+}
 function fill(id,vals,label=v=>v,value=v=>v){const e=document.getElementById(id);e.innerHTML='<option value="ALL">All</option>';vals.forEach(v=>{const o=document.createElement("option");o.value=value(v);o.textContent=label(v);e.appendChild(o)})}
 function state(){return {period:document.getElementById("period").value,manager:document.getElementById("manager").value,segment:document.getElementById("segment").value,outlet:document.getElementById("outlet").value,sku:document.getElementById("sku").value,category:document.getElementById("category").value}}
 function inRange(v,start,end){const d=dateObj(v);return d>=start&&d<=end}
 function monthEnd(d){return new Date(d.getFullYear(),d.getMonth()+1,0)}
 function monthStartFromString(v){const d=dateObj(v);return new Date(d.getFullYear(),d.getMonth(),1)}
-function periodBounds(p){return {start:p==="YTD"?YEAR_START:MONTH_START,end:LAST}}
+function periodBounds(p){
+  if(String(p||"").startsWith("MONTH:")){
+    const k=p.split(":")[1], parts=k.split("-").map(Number);
+    const start=new Date(parts[0],parts[1]-1,1);
+    const end=monthEnd(start);
+    return {start,end};
+  }
+  return {start:p==="YTD"?YEAR_START:MONTH_START,end:LAST};
+}
 function calendarRows(start,end){return F.calendar.filter(r=>inRange(r.Date,start,end))}
 function workingDays(start,end){return calendarRows(start,end).filter(r=>bool(r["Is Working Day"])).length}
 function elapsedWorkingDays(){return workingDays(MONTH_START,LAST)}
@@ -156,28 +176,57 @@ function aggregateKPIs(s,period=s.period){
  let weighted=0,weights=0;F.kpiConfig.forEach(r=>{if(!isIncludedFinal(r["Included Final"]))return;const key=kpiName(r.KPI),v=key?values[key]:null,w=kpiWeight(r.Weight);if(v!=null&&Number.isFinite(v)&&w!=null){weighted+=v*w;weights+=w}});
  return {overall:weights?weighted/weights:null,actual,target,volumeAch,planned,actualVisits,visitCompletion,jpAdherence,fridgeProductivity,executionActual,executionTarget,executionAch,activeOutlets:outs.length}
 }
-function renderCards(){const k=aggregateKPIs(state());const cards=[["Overall KPI",k.overall,D.kpiTargets["Overall KPI"]||.8,"p"],["Volume Achievement",k.volumeAch,D.kpiTargets.Volume||1,"p",`Actual: ${num(k.actual)} &nbsp; Target: ${num(k.target)}`],["JP Adherence",k.jpAdherence,D.kpiTargets["JP Adherence"]||.8,"p"],["Visit Completion",k.visitCompletion,D.kpiTargets["Visit Completion"]||1,"p"],["Fridge Productivity",k.fridgeProductivity,D.kpiTargets["Fridge Productivity"]||1,"d"],["Active Outlets",k.activeOutlets,null,"n"],["Execution Standard",k.executionActual,k.executionTarget,"p"]];document.getElementById("cards").innerHTML=cards.map(c=>{const val=c[3]==="p"?pct(c[1]):c[3]==="d"?num(c[1],2):num(c[1]);const sub=c[4]??(c[2]==null?"":`Target: ${c[3]==="p"?pct(c[2]):num(c[2],2)}`);const ach=c[2]&&c[1]!=null?Math.min(c[1]/c[2],1):0;const color=c[1]==null?SAND:(c[2]&&c[1]>=c[2]?GREEN:NAVY);return `<div class="card"><div class="card-title">${c[0]}</div><div class="card-value" style="color:${color}">${val}</div><div class="card-sub">${sub}</div><div class="progress"><span style="width:${Math.max(0,ach*100)}%;background:${color}"></span></div></div>`}).join("")}
+function renderCards(){const k=aggregateKPIs(state());const cards=[["Overall KPI",k.overall,D.kpiTargets["Overall KPI"]||.8,"p"],["Volume Achievement",k.volumeAch,D.kpiTargets.Volume||1,"p",`Actual: ${num(k.actual)} &nbsp; Target: ${num(k.target)}`],["JP Adherence",k.jpAdherence,D.kpiTargets["JP Adherence"]||.8,"p"],["Visit Completion",k.visitCompletion,D.kpiTargets["Visit Completion"]||1,"p"],["Active Outlets",k.activeOutlets,null,"n"],["Execution Standard",k.executionActual,k.executionTarget,"p"]];document.getElementById("cards").innerHTML=cards.map(c=>{const val=c[3]==="p"?pct(c[1]):c[3]==="d"?num(c[1],2):num(c[1]);const sub=c[4]??(c[2]==null?"":`Target: ${c[3]==="p"?pct(c[2]):num(c[2],2)}`);const ach=c[2]&&c[1]!=null?Math.min(c[1]/c[2],1):0;const color=c[1]==null?SAND:(c[2]&&c[1]>=c[2]?GREEN:NAVY);return `<div class="card"><div class="card-title">${c[0]}</div><div class="card-value" style="color:${color}">${val}</div><div class="card-sub">${sub}</div><div class="progress"><span style="width:${Math.max(0,ach*100)}%;background:${color}"></span></div></div>`}).join("")}
 function kill(id){if(charts[id]){charts[id].destroy();delete charts[id]}}
 function combo(id,rows,labelKey,aKey,tKey,hKey){kill(id);charts[id]=new Chart(document.getElementById(id),{type:"bar",data:{labels:rows.map(r=>r[labelKey]),datasets:[{label:"Actual",data:rows.map(r=>r[aKey]??0),backgroundColor:NAVY,borderRadius:5,yAxisID:"y"},{label:"Target",data:rows.map(r=>r[tKey]??0),backgroundColor:SAND,borderRadius:5,yAxisID:"y"},{label:"Achievement %",data:rows.map(r=>r[hKey]==null?null:r[hKey]*100),type:"line",borderColor:GREEN,backgroundColor:GREEN,borderWidth:3,tension:.35,borderDash:[6,4],pointRadius:4,pointBackgroundColor:"#fff",pointBorderColor:GREEN,pointBorderWidth:2,yAxisID:"y1"}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top",align:"center"},datalabels:{display:c=>c.datasetIndex===2,formatter:v=>v==null?"":Math.round(v)+"%",anchor:"end",align:"top",color:"#1f1f1f",font:{weight:"700",size:11}}},scales:{y:{beginAtZero:true,grid:{color:"#ece7dd"}},y1:{beginAtZero:true,position:"right",grid:{drawOnChartArea:false},ticks:{callback:v=>v+"%"}}}}})}
 function doughnut(id,labels,values){kill(id);charts[id]=new Chart(document.getElementById(id),{type:"doughnut",data:{labels,datasets:[{data:values,backgroundColor:[GREEN,"#d8b56a","#b94a3f"],borderColor:"#fff",borderWidth:3,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:"60%",plugins:{legend:{position:"bottom",align:"center"},datalabels:{formatter:(v,c)=>{const t=c.dataset.data.reduce((a,b)=>a+b,0);return t?Math.round(v/t*100)+"%":""},color:"#fff",font:{weight:"800",size:11}}}}})}
-function monthlyTargets(s){if(s.sku!=="ALL")return [];return F.targets.filter(r=>{const m=monthStartFromString(r["Target Month"]);return targetMatch(r,s)&&m.getFullYear()===MONTH_START.getFullYear()&&m.getMonth()===MONTH_START.getMonth()})}
-function mtdSales(s){return F.sales.filter(r=>salesMatch(r,s)&&inRange(r.Date,MONTH_START,LAST))}
-function volumePerfRow(labels,s){const julyTarget=sum(monthlyTargets(s),"Full Month Target"),wdFull=fullMonthWorkingDays(),wdElapsed=elapsedWorkingDays(),wdRemaining=remainingWorkingDays(),actual=sum(mtdSales(s),"Actual Volume"),mtdTarget=wdFull?julyTarget*wdElapsed/wdFull:null,dailyTarget=wdFull?julyTarget/wdFull:null,actualRR=wdElapsed?actual/wdElapsed:null,remaining=Math.max(julyTarget-actual,0),reqRR=wdRemaining?remaining/wdRemaining:null,projected=(actualRR||0)*wdFull;return {...labels,"July Target":julyTarget,"MTD Target":mtdTarget,"MTD Actual":actual,"% MTD Target Achieved":div(actual,mtdTarget),"% Monthly Target Achieved":div(actual,julyTarget),"Daily Target":dailyTarget,"Actual Run rate":actualRR,"Expected Daily required Run rate":reqRR,"Variance Monthly (Actual Vs Target)":actual-julyTarget,"Closing RR (Cadence)":div(projected,julyTarget)}}
+function tablePeriodDates(){
+  const s=state(), b=periodBounds(s.period);
+  if(String(s.period||"").startsWith("MONTH:")){
+    return {start:b.start,end:b.end,monthStart:b.start,periodEnd:b.end,isClosedMonth:true};
+  }
+  return {start:MONTH_START,end:LAST,monthStart:MONTH_START,periodEnd:LAST,isClosedMonth:false};
+}
+function monthlyTargets(s){
+  if(s.sku!=="ALL")return [];
+  const d=tablePeriodDates();
+  return F.targets.filter(r=>{const m=monthStartFromString(r["Target Month"]);return targetMatch(r,s)&&m.getFullYear()===d.monthStart.getFullYear()&&m.getMonth()===d.monthStart.getMonth()});
+}
+function mtdSales(s){const d=tablePeriodDates();return F.sales.filter(r=>salesMatch(r,s)&&inRange(r.Date,d.start,d.end))}
+function volumePerfRow(labels,s){
+  const d=tablePeriodDates(), monthlyTarget=sum(monthlyTargets(s),"Full Month Target");
+  const wdFull=workingDays(d.monthStart,monthEnd(d.monthStart));
+  const wdElapsed=workingDays(d.monthStart,d.periodEnd);
+  const afterEnd=new Date(d.periodEnd);afterEnd.setDate(afterEnd.getDate()+1);
+  const wdRemaining=d.isClosedMonth?0:workingDays(afterEnd,monthEnd(d.monthStart));
+  const actual=sum(mtdSales(s),"Actual Volume");
+  const mtdTarget=wdFull?monthlyTarget*wdElapsed/wdFull:null;
+  const dailyTarget=wdFull?monthlyTarget/wdFull:null;
+  const actualRR=wdElapsed?actual/wdElapsed:null;
+  const dailyVariance=(dailyTarget!=null&&actualRR!=null)?dailyTarget-actualRR:null;
+  const remaining=Math.max(monthlyTarget-actual,0);
+  const reqRR=wdRemaining?remaining/wdRemaining:null;
+  const projected=(actualRR||0)*wdFull;
+  return {...labels,"Monthly Target":monthlyTarget,"MTD Target":mtdTarget,"MTD Actual":actual,"% MTD Target Achieved":div(actual,mtdTarget),"% Monthly Target Achieved":div(actual,monthlyTarget),"Daily Target":dailyTarget,"Actual Run rate":actualRR,"Daily Target - Actual RR":dailyVariance,"Expected Daily required Run rate":reqRR,"Variance Monthly (Actual Vs Target)":actual-monthlyTarget,"Closing RR (Cadence)":div(projected,monthlyTarget)}
+}
 function buildManagerRows(){const s=state(), managers=unique(selectedOutlets(s),"KA Manager"), totalActual=sum(mtdSales(s),"Actual Volume");const rows=managers.map(manager=>{const row=volumePerfRow({"KA Manager":manager},{...s,manager});row["Contri %"]=div(row["MTD Actual"],totalActual);return row});if(s.manager==="ALL"&&s.segment==="ALL"&&s.outlet==="ALL"){const total=volumePerfRow({"KA Manager":"Grand Total"},s);total["Contri %"]=1;rows.push(total)}return rows}
 function buildOutletRows(){const s=state();return selectedOutlets(s).map(o=>volumePerfRow({"KA Manager":o["KA Manager"],"Outlet Name":o["Outlet Name"],"Outlet ID":o["Outlet ID"]},{...s,outlet:o["Outlet ID"]}))}
 function buildZeroRows(){return buildOutletRows().filter(r=>(Number(r["MTD Actual"])||0)===0).map(r=>({"KA Manager":r["KA Manager"],"Outlet Name":r["Outlet Name"],"Outlet ID":r["Outlet ID"]}))}
 function buildCharts(){const s=state(),{start,end}=periodBounds(s.period), managers=unique(selectedOutlets(s),"KA Manager");combo("managerVolume",managers.map(m=>{const k=aggregateKPIs({...s,manager:m},s.period);return {"KA Manager":m,Actual:k.actual,Target:k.target,Achievement:k.volumeAch}}),"KA Manager","Actual","Target","Achievement");combo("managerVisits",managers.map(m=>{const rows=visitRows({...s,manager:m},start,end),planned=sum(rows,"Planned Visits"),actual=sum(rows,"Actual Visits");return {"KA Manager":m,Planned:planned,Actual:actual,Achievement:div(actual,planned)}}),"KA Manager","Actual","Planned","Achievement");combo("managerExecution",managers.map(m=>{const exec=latestExecByOutlet(executionRows({...s,manager:m},start,end));const actual=exec.length?exec.reduce((a,r)=>a+(Number(r["Execution Actual"])||0),0)/exec.length:null,target=exec.length?exec.reduce((a,r)=>a+(Number(r["Execution Target"])||0),0)/exec.length:null;return {"KA Manager":m,Actual:actual,Target:target,Achievement:div(actual,target)}}),"KA Manager","Actual","Target","Achievement");combo("managerFridge",managers.map(m=>{const k=aggregateKPIs({...s,manager:m},s.period),t=D.kpiTargets["Fridge Productivity"]||1;return {"KA Manager":m,Actual:k.fridgeProductivity,Target:t,Achievement:div(k.fridgeProductivity,t)}}),"KA Manager","Actual","Target","Achievement");const outs=selectedOutlets(s).filter(r=>bool(r["Has Fridge"])),ids=new Set(outs.map(r=>r["Outlet ID"])),sales=salesRows(s,start,end).filter(r=>ids.has(r["Outlet ID"])),vol=new Map();sales.forEach(r=>vol.set(r["Outlet ID"],(vol.get(r["Outlet ID"])||0)+(Number(r["Actual Volume"])||0)));const days=daysInPeriod(start,end),counts={Productive:0,Underproductive:0,Inactive:0};outs.forEach(o=>{const p=(vol.get(o["Outlet ID"])||0)/days;if(p>=1)counts.Productive++;else if(p>0)counts.Underproductive++;else counts.Inactive++});doughnut("fridgeBreakdown",["Productive","Underproductive","Inactive"],[counts.Productive,counts.Underproductive,counts.Inactive]);const k=aggregateKPIs(s,s.period);combo("volumeSummary",[{Metric:"Volume",Actual:k.actual,Target:k.target,Achievement:k.volumeAch}],"Metric","Actual","Target","Achievement")}
-const managerCols=[["KA Manager","KA Manager","t"],["Contri %","Contri %","p"],["July Target","Jul Target","n"],["MTD Target","MTD Target","n"],["MTD Actual","MTD Actual","n"],["% MTD Target Achieved","MTD Ach %","p"],["% Monthly Target Achieved","Mon Ach %","p"],["Daily Target","Daily Tgt","n1"],["Actual Run rate","Actual RR","n1"],["Expected Daily required Run rate","Req. RR","n1"],["Variance Monthly (Actual Vs Target)","Mon Var.","n"],["Closing RR (Cadence)","Closing RR","cadence"]];
-const outletCols=[["KA Manager","KA Manager","t"],["Outlet Name","Outlet","t"],["Outlet ID","Outlet ID","t"],["July Target","Jul Target","n"],["MTD Target","MTD Target","n"],["MTD Actual","MTD Actual","n"],["% MTD Target Achieved","MTD Ach %","p"],["% Monthly Target Achieved","Mon Ach %","p"],["Daily Target","Daily Tgt","n1"],["Actual Run rate","Actual RR","n1"],["Expected Daily required Run rate","Req. RR","n1"],["Variance Monthly (Actual Vs Target)","Mon Var.","n"],["Closing RR (Cadence)","Closing RR","cadence"]];
+const managerCols=[["KA Manager","KA Manager","t"],["Contri %","Contri %","p"],["Monthly Target","Month Target","n"],["MTD Target","Period Target","n"],["MTD Actual","Actual","n"],["% MTD Target Achieved","Period Ach %","p"],["% Monthly Target Achieved","Month Ach %","p"],["Daily Target","Daily Tgt","n1"],["Actual Run rate","Actual RR","n1"],["Daily Target - Actual RR","Daily Var.","dailyVar"],["Expected Daily required Run rate","Req. RR","n1"],["Variance Monthly (Actual Vs Target)","Month Var.","n"],["Closing RR (Cadence)","Closing RR","cadence"]];
+const outletCols=[["KA Manager","KA Manager","t"],["Outlet Name","Outlet","t"],["Outlet ID","Outlet ID","t"],["Monthly Target","Month Target","n"],["MTD Target","Period Target","n"],["MTD Actual","Actual","n"],["% MTD Target Achieved","Period Ach %","p"],["% Monthly Target Achieved","Month Ach %","p"],["Daily Target","Daily Tgt","n1"],["Actual Run rate","Actual RR","n1"],["Daily Target - Actual RR","Daily Var.","dailyVar"],["Expected Daily required Run rate","Req. RR","n1"],["Variance Monthly (Actual Vs Target)","Month Var.","n"],["Closing RR (Cadence)","Closing RR","cadence"]];
 const zeroCols=[["KA Manager","KA Manager","t"],["Outlet Name","Outlet","t"],["Outlet ID","Outlet ID","t"]];
-function cell(v,t){if(t==="cadence"){const c=v==null||!Number.isFinite(Number(v))?"bad":(Number(v)>=1?"good":(Number(v)>=.9?"watch":"bad"));return `<span class="pill ${c}">${pct(v)}</span>`}if(t==="p")return pct(v);if(t==="n")return num(v,0);if(t==="n1")return num(v,1);return v??"—"}
-function table(id,rows,cols){document.getElementById(id).innerHTML=`<thead><tr>${cols.map(c=>`<th>${c[1]}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>{const vc=c[0]==="Variance Monthly (Actual Vs Target)"?((Number(r[c[0]])||0)>=0?" positive":" negative"):"";return `<td class="${c[2]==="t"?"left":""}${vc}">${cell(r[c[0]],c[2])}</td>`}).join("")}</tr>`).join("")}</tbody>`}
+function cell(v,t){if(t==="cadence"){const c=v==null||!Number.isFinite(Number(v))?"bad":(Number(v)>=1?"good":(Number(v)>=.9?"watch":"bad"));return `<span class="pill ${c}">${pct(v)}</span>`}if(t==="dailyVar")return num(v,1);if(t==="p")return pct(v);if(t==="n")return num(v,0);if(t==="n1")return num(v,1);return v??"—"}
+function table(id,rows,cols){document.getElementById(id).innerHTML=`<thead><tr>${cols.map(c=>`<th>${c[1]}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>{let vc="";
+      if(c[0]==="Variance Monthly (Actual Vs Target)") vc=((Number(r[c[0]])||0)>=0?" positive":" negative");
+      if(c[0]==="Daily Target - Actual RR") vc=((Number(r[c[0]])||0)<=0?" positive":" negative");
+      return `<td class="${c[2]==="t"?"left":""}${vc}">${cell(r[c[0]],c[2])}</td>`}).join("")}</tr>`).join("")}</tbody>`}
 let currentManagerRows=[],currentOutletRows=[],currentZeroRows=[];
 function renderTables(){currentManagerRows=buildManagerRows();currentOutletRows=buildOutletRows();currentZeroRows=buildZeroRows();table("managerTable",currentManagerRows,managerCols);table("outletTable",currentOutletRows,outletCols);table("zeroSalesTable",currentZeroRows,zeroCols)}
 function csv(name,rows,cols){const q=v=>'"'+String(v??"").replaceAll('"','""')+'"';const out=[cols.map(c=>q(c[1])).join(","),...rows.map(r=>cols.map(c=>q(r[c[0]])).join(","))].join("\n");const b=new Blob(["\ufeff"+out],{type:"text/csv"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;a.click();URL.revokeObjectURL(a.href)}
 function refreshOutletOptions(){const s=state(),cur=document.getElementById("outlet").value;const vals=F.outlets.filter(r=>(s.manager==="ALL"||r["KA Manager"]===s.manager)&&(s.segment==="ALL"||r.Segment===s.segment));fill("outlet",vals,v=>v["Outlet ID"]+" — "+v["Outlet Name"],v=>v["Outlet ID"]);if(vals.some(v=>v["Outlet ID"]===cur))document.getElementById("outlet").value=cur}
 function renderAll(){renderCards();buildCharts();renderTables()}
-function init(payload){D=payload;F=D.facts;LAST=new Date(D.meta.lastDataDate+"T00:00:00");MONTH_START=new Date(LAST.getFullYear(),LAST.getMonth(),1);YEAR_START=new Date(LAST.getFullYear(),0,1);fill("manager",unique(F.outlets,"KA Manager"));fill("segment",unique(F.outlets,"Segment"));fill("outlet",F.outlets,v=>v["Outlet ID"]+" — "+v["Outlet Name"],v=>v["Outlet ID"]);fill("sku",unique(F.sales,"SKU"));fill("category",unique(F.sales,"Category"));document.getElementById("loader").style.display="none";document.getElementById("page").style.display="block";document.getElementById("footer").textContent=`Generated from single CSV extract • Last data date ${D.meta.lastDataDate||""}`;renderAll()}
+function init(payload){D=payload;F=D.facts;LAST=new Date(D.meta.lastDataDate+"T00:00:00");MONTH_START=new Date(LAST.getFullYear(),LAST.getMonth(),1);YEAR_START=new Date(LAST.getFullYear(),0,1);fillPeriodOptions();fill("manager",unique(F.outlets,"KA Manager"));fill("segment",unique(F.outlets,"Segment"));fill("outlet",F.outlets,v=>v["Outlet ID"]+" — "+v["Outlet Name"],v=>v["Outlet ID"]);fill("sku",unique(F.sales,"SKU"));fill("category",unique(F.sales,"Category"));document.getElementById("loader").style.display="none";document.getElementById("page").style.display="block";document.getElementById("footer").textContent=`Generated from single CSV extract • Last data date ${D.meta.lastDataDate||""}`;renderAll()}
 document.getElementById("clear").onclick=()=>{["manager","segment","outlet","sku","category"].forEach(id=>document.getElementById(id).value="ALL");document.getElementById("period").value="MTD";refreshOutletOptions();renderAll()};
 ["period","outlet","sku","category"].forEach(id=>document.getElementById(id).onchange=renderAll);
 ["manager","segment"].forEach(id=>document.getElementById(id).onchange=()=>{refreshOutletOptions();renderAll()});

@@ -63,6 +63,36 @@ DEFAULT_KPI_TARGETS = {
     "Execution Standard": 0.85,
 }
 
+# =========================================================
+# HARDCODED VOLUME CONVERSION TO CRATE EQUIVALENT
+# =========================================================
+# Standard bottle crate = 24 bottles x 0.33L = 7.92L.
+# Standard keg = 30L.
+# Therefore:
+#   1 keg = 30 / 7.92 = 3.787878... crate equivalent
+#
+# The dashboard will use "Actual Volume" as crate equivalent.
+# The original unconverted sales quantity is kept as "Raw Actual Volume".
+BOTTLE_CRATE_LITERS = 24 * 0.33
+KEG_LITERS = 30
+KEG_TO_CRATE_EQUIVALENT = KEG_LITERS / BOTTLE_CRATE_LITERS
+
+
+def crate_equivalent_factor(sku: str, category: str) -> float:
+    """Return hardcoded conversion factor from source quantity to crate equivalent."""
+    sku_text = str(sku or "").strip().lower()
+    category_text = str(category or "").strip().lower()
+
+    # Keg / draught products are treated as 30L keg units.
+    if "keg" in sku_text or "draught" in sku_text or "draft" in sku_text:
+        return KEG_TO_CRATE_EQUIVALENT
+
+    if category_text in {"draught", "draft"}:
+        return KEG_TO_CRATE_EQUIVALENT
+
+    # Bottle products are already reported as crate quantity.
+    return 1.0
+
 
 # =========================================================
 # GENERAL HELPERS
@@ -474,6 +504,18 @@ def prepare_actual_sales(
     # Keep unmatched products visible but do not silently classify them as Bottle.
     # They will not connect correctly to Bottle/Draught target until added to Product_MDM.
     prepared["Category"] = prepared["Category"].fillna("Unmapped")
+
+    # Convert all actual sales to crate equivalent in code.
+    # Bottle/crate products stay as-is.
+    # Keg/draught products are converted using 1 x 30L keg = 30 / 7.92 = 3.787878 crate equivalent.
+    prepared["Raw Actual Volume"] = prepared["Actual Volume"]
+    prepared["Crate Equivalent Factor"] = [
+        crate_equivalent_factor(sku, category)
+        for sku, category in zip(prepared["SKU"], prepared["Category"])
+    ]
+    prepared["Actual Volume"] = (
+        prepared["Raw Actual Volume"] * prepared["Crate Equivalent Factor"]
+    )
 
     return prepared.drop(columns=["SKU Key"]), unmatched_product_count
 
@@ -1658,7 +1700,12 @@ def build_dashboard_extract() -> dict[str, Any]:
             "unmatchedProductRows": unmatched_product_count,
             "productCategoryBasis": (
                 "Actual_Sales Product is mapped through Product_MDM to "
-                "Bottle/Draught Category, then compared with Sales_Target Category"
+                "Bottle/Draught Category. Actual Volume is converted in code to "
+                "crate equivalent before dashboard calculations."
+            ),
+            "crateEquivalentBasis": (
+                "Bottle/crate products = 1.0. Keg/draught products = 30L keg / "
+                "7.92L bottle crate = 3.787878 crate equivalent."
             ),
         },
         "filters": filters,
