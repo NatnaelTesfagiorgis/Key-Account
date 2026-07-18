@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KA Performance Dashboard - Single CSV Loader</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<style>
+:root{
+  --navy:#0a172e;--navy2:#102341;--gold:#c98b08;--gold2:#f0a51a;--bg:#f5f1e8;
+  --line:#efe4d2;--ink:#151515;--muted:#6b655c;--green:#16834a;--red:#c9362c;
+  --shadow:0 14px 34px rgba(10,23,46,.10);--shadow-soft:0 7px 20px rgba(10,23,46,.07);
+}
+*{box-sizing:border-box}
+html{text-rendering:geometricPrecision;-webkit-font-smoothing:antialiased}
+body{margin:0;font-family:"Segoe UI Variable Text","Segoe UI",Arial,sans-serif;background:radial-gradient(circle at top left,rgba(240,165,26,.16),transparent 30%),linear-gradient(180deg,#fffaf0 0%,var(--bg) 100%);color:var(--ink)}
+.loader{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(135deg,var(--navy),var(--navy2) 58%,#513606)}
+.loader-card{width:min(660px,94vw);background:rgba(255,255,255,.96);border-radius:28px;padding:34px;box-shadow:0 24px 58px rgba(0,0,0,.24);text-align:center}
+.loader-card h1{margin:10px 0 8px;font-size:34px;letter-spacing:-.7px;color:var(--navy)}
+.loader-card p{color:#5d5a54;font-weight:600}
+.badge{display:inline-block;padding:6px 12px;border-radius:999px;background:#fff1cf;color:var(--navy);font-size:11px;font-weight:850;letter-spacing:.09em;text-transform:uppercase}
+.file-btn{display:inline-block;margin-top:10px;border-radius:12px;padding:12px 18px;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#fff;font-weight:850;cursor:pointer;box-shadow:0 10px 20px rgba(201,139,8,.24)}
+.file-btn input{display:none}.status{margin-top:16px;font-size:12px;font-weight:800;color:var(--muted)}.status.error{color:var(--red)}.status.success{color:var(--green)}
+.page{max-width:1840px;margin:auto;padding:16px;display:none}.topbar{display:flex;align-items:center;gap:22px;min-height:92px;padding:14px 24px;border-radius:22px;background:linear-gradient(120deg,var(--navy),var(--navy2) 58%,#473106);box-shadow:var(--shadow)}
+.logo-box{width:190px;height:62px;border-right:2px solid rgba(240,165,26,.75);padding-right:22px;display:flex;align-items:center;justify-content:center;color:#fff8ea;font-weight:900;letter-spacing:.08em}
+.topbar h1{margin:0;font-size:34px;font-weight:780;letter-spacing:-.7px;color:#fffaf0}
+.filters{display:grid;grid-template-columns:1.1fr repeat(5,1fr) 150px;gap:12px;margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.92);box-shadow:var(--shadow-soft)}
+.filter label{display:block;margin-bottom:6px;font-size:10.5px;font-weight:850;letter-spacing:.085em;text-transform:uppercase;color:#5d4b2b}
+.filter select{width:100%;height:39px;padding:9px 11px;border:1px solid #d3c6b2;border-radius:10px;background:#fff;font:650 13px "Segoe UI",Arial}
+.btn{border:0;border-radius:10px;padding:10px 16px;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#fff;font-weight:850;cursor:pointer}
+.cards{display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:11px;margin-top:12px}
+.card{min-height:138px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px 14px;text-align:center;box-shadow:var(--shadow-soft);position:relative;overflow:hidden}
+.card:before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:linear-gradient(90deg,var(--navy),var(--gold2))}
+.card-title{font-size:10.5px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:#4f4129}.card-value{margin:11px 0 6px;font-size:32px;font-weight:820;letter-spacing:-.55px}.card-sub{min-height:18px;font-size:11.5px;font-weight:600;color:#5c5850}.progress{height:6px;border-radius:999px;background:#ece5d8;margin-top:15px;overflow:hidden}.progress span{display:block;height:100%;border-radius:999px}
+.grid3{display:grid;grid-template-columns:1.12fr 1.08fr 1fr;gap:12px;margin-top:12px}.panel{background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:18px;padding:16px;min-height:318px;box-shadow:var(--shadow-soft)}.panel h2,.table-title{margin:0 0 12px;font-size:13px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;color:var(--navy)}.chart{height:265px}
+.table-panel{margin-top:12px;background:rgba(255,255,255,.97);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-soft)}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,#fffdf8,#fff5df)}.table-wrap{overflow:auto;max-height:540px}
+table{width:100%;border-collapse:separate;border-spacing:0;white-space:nowrap;font-size:11.8px;font-variant-numeric:tabular-nums}th{position:sticky;top:0;z-index:2;background:linear-gradient(180deg,var(--navy2),var(--navy));color:#fff8ea;padding:10px 9px;border-right:1px solid rgba(255,255,255,.08);font-size:10.5px;text-transform:uppercase}td{padding:9px 10px;border-bottom:1px solid #efe5d5;border-right:1px solid #f2eadf;text-align:right;background:#fff}tbody tr:nth-child(even) td{background:#fffdf8}td.left{text-align:left;font-weight:650}.good{color:var(--green);font-weight:850}.watch{color:#b86f00;font-weight:850}.bad{color:var(--red);font-weight:850}.positive{color:var(--green);font-weight:850}.negative{color:var(--red);font-weight:850}.pill{display:inline-block;min-width:58px;padding:4px 10px;border-radius:999px;font-weight:850;text-align:center}.pill.good{background:#e8f6ee;color:var(--green)}.pill.watch{background:#fff2d4;color:#b56a00}.pill.bad{background:#fde9e7;color:var(--red)}
+.footer{text-align:center;color:var(--muted);font-size:11px;font-weight:550;padding:15px}
+@media(max-width:1200px){.filters{grid-template-columns:repeat(3,1fr)}.cards{grid-template-columns:repeat(3,1fr)}.grid3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="loader" class="loader">
+  <div class="loader-card">
+    <div class="badge">Single CSV Mode</div>
+    <h1>Load KA Dashboard Extract</h1>
+    <p>Select <strong>ka_dashboard_extract.csv</strong> created by the Python data extractor.</p>
+    <label class="file-btn">Choose ka_dashboard_extract.csv<input id="csvInput" type="file" accept=".csv,text/csv"></label>
+    <div id="status" class="status">Waiting for CSV file...</div>
+  </div>
+</div>
+
+<div id="page" class="page">
+<header class="topbar"><div class="logo-box">HABESHA</div><h1>Key Account Performance Dashboard</h1></header>
+<section class="filters">
+<div class="filter"><label>Date / Period</label><select id="period"><option value="MTD">MTD</option><option value="YTD">YTD</option></select></div>
+<div class="filter"><label>KA Manager</label><select id="manager"></select></div>
+<div class="filter"><label>Segment</label><select id="segment"></select></div>
+<div class="filter"><label>Outlet</label><select id="outlet"></select></div>
+<div class="filter"><label>SKU</label><select id="sku"></select></div>
+<div class="filter"><label>Category</label><select id="category"></select></div>
+<button id="clear" class="btn">↻ Clear Filters</button>
+</section>
+<section id="cards" class="cards"></section>
+<section class="grid3">
+  <article class="panel"><h2>Volume vs Target by KA Manager</h2><div class="chart"><canvas id="managerVolume"></canvas></div></article>
+  <article class="panel"><h2>Visits by KA Manager</h2><div class="chart"><canvas id="managerVisits"></canvas></div></article>
+  <article class="panel"><h2>Execution by KA Manager</h2><div class="chart"><canvas id="managerExecution"></canvas></div></article>
+</section>
+<section class="grid3">
+  <article class="panel"><h2>Fridge Prod. by KA Manager</h2><div class="chart"><canvas id="managerFridge"></canvas></div></article>
+  <article class="panel"><h2>Fridge Prod. Breakdown</h2><div class="chart"><canvas id="fridgeBreakdown"></canvas></div></article>
+  <article class="panel"><h2>Volume Summary</h2><div class="chart"><canvas id="volumeSummary"></canvas></div></article>
+</section>
+<section class="table-panel"><div class="toolbar"><strong class="table-title">KA Manager Vol. Perf.</strong><button id="exportManager" class="btn">⇩ Export</button></div><div class="table-wrap"><table id="managerTable"></table></div></section>
+<section class="table-panel"><div class="toolbar"><strong class="table-title">Outlet Vol. Perf.</strong><button id="exportOutlet" class="btn">⇩ Export</button></div><div class="table-wrap"><table id="outletTable"></table></div></section>
+<section class="table-panel"><div class="toolbar"><strong class="table-title">Zero-Sales Outlets</strong><button id="exportZeroSales" class="btn">⇩ Export</button></div><div class="table-wrap"><table id="zeroSalesTable"></table></div></section>
+<div id="footer" class="footer"></div>
+</div>
+
+<script>
+Chart.register(ChartDataLabels);
+Chart.defaults.font.family='"Segoe UI","Arial",sans-serif';
+Chart.defaults.font.size=11;Chart.defaults.font.weight='600';Chart.defaults.color='#2f2f2f';
+Chart.defaults.plugins.legend.position='top';Chart.defaults.plugins.legend.align='center';
+Chart.defaults.plugins.legend.labels.usePointStyle=true;Chart.defaults.plugins.legend.labels.boxWidth=8;Chart.defaults.plugins.legend.labels.padding=16;
+Chart.defaults.plugins.tooltip.backgroundColor='rgba(23,23,23,.92)';Chart.defaults.plugins.tooltip.padding=10;Chart.defaults.plugins.tooltip.cornerRadius=8;
+
+let D,F,LAST,MONTH_START,YEAR_START,charts={};
+const NAVY="#0f2a4a", SAND="#d7c6a3", GREEN="#1a8f5a", RED="#c9362c";
+const num=(v,d=0)=>v==null||!Number.isFinite(Number(v))?"—":Number(v).toLocaleString(undefined,{maximumFractionDigits:d});
+const pct=v=>v==null||!Number.isFinite(Number(v))?"—":Math.round(Number(v)*100)+"%";
+const dateObj=v=>new Date(v+"T00:00:00");
+const div=(a,b)=>b? a/b:null;
+const cap=v=>v==null?null:Math.max(0,Math.min(v,1));
+const sum=(rows,key)=>rows.reduce((a,r)=>a+(Number(r[key])||0),0);
+function bool(v){return v===true||["true","yes","y","1"].includes(String(v??"").trim().toLowerCase())}
+function setStatus(msg,kind=""){const e=document.getElementById("status");e.textContent=msg;e.className="status "+kind}
+function parseCSV(file){return new Promise((resolve,reject)=>Papa.parse(file,{header:true,skipEmptyLines:true,dynamicTyping:true,complete:r=>resolve(r.data),error:reject}))}
+function cleanRow(r){const o={};Object.keys(r).forEach(k=>{if(k!=="__table__" && k!=="__empty__" && r[k]!==null && r[k]!==undefined && String(r[k])!=="")o[k]=r[k]});return o}
+function payloadFromSingleCSV(rows){
+  const facts={outlets:[],sales:[],targets:[],visits:[],execution:[],calendar:[],kpiConfig:[]}, meta={}, kpiTargets={}, seenTables=new Set();
+  rows.forEach(r=>{
+    const t=String(r.__table__||"").trim();
+    if(!t) return;
+    seenTables.add(t);
+    if(facts[t]){
+      if(String(r.__empty__||"").trim()==="1") return;
+      facts[t].push(cleanRow(r));
+    }
+    else if(t==="meta" && r.Key) meta[String(r.Key)]=r.Value;
+    else if(t==="kpiTargets" && r.Key) kpiTargets[String(r.Key)]=Number(r.Value);
+  });
+  const required=["outlets","sales","targets","visits","execution","calendar","kpiConfig"];
+  const missing=required.filter(t=>!seenTables.has(t));
+  if(missing.length) throw new Error("Missing table section in CSV: "+missing.join(", "));
+  return {facts,meta,kpiTargets};
+}
+function unique(rows,key){return [...new Set(rows.map(r=>r[key]).filter(v=>v!==undefined&&v!==null&&String(v).trim()!==""))].sort()}
+function fill(id,vals,label=v=>v,value=v=>v){const e=document.getElementById(id);e.innerHTML='<option value="ALL">All</option>';vals.forEach(v=>{const o=document.createElement("option");o.value=value(v);o.textContent=label(v);e.appendChild(o)})}
+function state(){return {period:document.getElementById("period").value,manager:document.getElementById("manager").value,segment:document.getElementById("segment").value,outlet:document.getElementById("outlet").value,sku:document.getElementById("sku").value,category:document.getElementById("category").value}}
+function inRange(v,start,end){const d=dateObj(v);return d>=start&&d<=end}
+function monthEnd(d){return new Date(d.getFullYear(),d.getMonth()+1,0)}
+function monthStartFromString(v){const d=dateObj(v);return new Date(d.getFullYear(),d.getMonth(),1)}
+function periodBounds(p){return {start:p==="YTD"?YEAR_START:MONTH_START,end:LAST}}
+function calendarRows(start,end){return F.calendar.filter(r=>inRange(r.Date,start,end))}
+function workingDays(start,end){return calendarRows(start,end).filter(r=>bool(r["Is Working Day"])).length}
+function elapsedWorkingDays(){return workingDays(MONTH_START,LAST)}
+function fullMonthWorkingDays(){return workingDays(MONTH_START,monthEnd(MONTH_START))}
+function remainingWorkingDays(){const t=new Date(LAST);t.setDate(t.getDate()+1);return workingDays(t,monthEnd(LAST))}
+function daysInPeriod(start,end){return Math.max(1,Math.round((end-start)/86400000)+1)}
+function baseMatch(r,s){return (s.manager==="ALL"||r["KA Manager"]===s.manager)&&(s.segment==="ALL"||r.Segment===s.segment)&&(s.outlet==="ALL"||r["Outlet ID"]===s.outlet)}
+function salesMatch(r,s){return baseMatch(r,s)&&(s.sku==="ALL"||r.SKU===s.sku)&&(s.category==="ALL"||r.Category===s.category)}
+function targetMatch(r,s){return baseMatch(r,s)&&(s.category==="ALL"||r.Category===s.category)}
+function selectedOutlets(s){return F.outlets.filter(r=>baseMatch(r,s)&&bool(r["Is Active"])!==false)}
+function salesRows(s,start,end){return F.sales.filter(r=>salesMatch(r,s)&&inRange(r.Date,start,end))}
+function visitRows(s,start,end){return F.visits.filter(r=>baseMatch(r,s)&&inRange(r.Date,start,end))}
+function executionRows(s,start,end){return F.execution.filter(r=>baseMatch(r,s)&&inRange(r.Date,start,end))}
+function targetRows(s,start,end){if(s.sku!=="ALL")return [];return F.targets.filter(r=>{const m=monthStartFromString(r["Target Month"]);return targetMatch(r,s)&&m>=new Date(start.getFullYear(),start.getMonth(),1)&&m<=new Date(end.getFullYear(),end.getMonth(),1)})}
+function monthlyFactor(ms,pe){const end=monthEnd(ms),c=pe<end?pe:end,total=workingDays(ms,end),elapsed=workingDays(ms,c);return total?elapsed/total:0}
+function phasedTargetTotal(rows,end){return rows.reduce((a,r)=>{const m=monthStartFromString(r["Target Month"]);const f=(m.getFullYear()===end.getFullYear()&&m.getMonth()===end.getMonth())?monthlyFactor(m,end):1;return a+(Number(r["Full Month Target"])||0)*f},0)}
+function latestExecByOutlet(rows){const m=new Map();rows.forEach(r=>{const old=m.get(r["Outlet ID"]);if(!old||dateObj(r.Date)>dateObj(old.Date))m.set(r["Outlet ID"],r)});return [...m.values()]}
+function isIncludedFinal(v){return v===true||["yes","y","true","1","included"].includes(String(v??"").trim().toLowerCase())}
+function kpiWeight(v){const w=Number(v);return Number.isFinite(w)?(w>1?w/100:w):null}
+function kpiName(n){const x=String(n??"").trim().toLowerCase();if(["volume","volume achievement","shipment volume","sales volume","sales volume achievement"].includes(x))return"Volume";if(["jp adherence","journey plan adherence","jp","plan adherence"].includes(x))return"JP Adherence";if(["visit completion","visit completion rate","visits completion"].includes(x))return"Visit Completion";if(["execution standard","execution","execution standard achievement"].includes(x))return"Execution Standard";if(["fridge productivity","cold coverage","fridge","cooler productivity"].includes(x))return"Fridge Productivity";return null}
+function aggregateKPIs(s,period=s.period){
+ const {start,end}=periodBounds(period), outs=selectedOutlets(s), ids=new Set(outs.map(r=>r["Outlet ID"]));
+ const sales=salesRows(s,start,end).filter(r=>ids.has(r["Outlet ID"])), visits=visitRows(s,start,end).filter(r=>ids.has(r["Outlet ID"])), exec=latestExecByOutlet(executionRows(s,start,end).filter(r=>ids.has(r["Outlet ID"]))), targets=targetRows(s,start,end).filter(r=>ids.has(r["Outlet ID"]));
+ const actual=sum(sales,"Actual Volume"), target=s.sku==="ALL"?phasedTargetTotal(targets,end):null, volumeAch=target?actual/target:null;
+ const planned=sum(visits,"Planned Visits"), actualVisits=sum(visits,"Actual Visits"), jpGood=sum(visits,"JP Good Visits"), visitCompletion=div(actualVisits,planned), jpAdherence=div(jpGood,actualVisits);
+ const executionActual=exec.length?exec.reduce((a,r)=>a+(Number(r["Execution Actual"])||0),0)/exec.length:null, executionTarget=exec.length?exec.reduce((a,r)=>a+(Number(r["Execution Target"])||0),0)/exec.length:(D.kpiTargets["Execution Standard"]||.85), executionAch=div(executionActual,executionTarget);
+ const fridgeOutlets=outs.filter(r=>bool(r["Has Fridge"])), fridgeIds=new Set(fridgeOutlets.map(r=>r["Outlet ID"])), fridgeVolume=sales.filter(r=>fridgeIds.has(r["Outlet ID"])).reduce((a,r)=>a+(Number(r["Actual Volume"])||0),0), fridgeProductivity=fridgeOutlets.length?fridgeVolume/(fridgeOutlets.length*daysInPeriod(start,end)):null;
+ const values={"Volume":cap(volumeAch),"JP Adherence":cap(jpAdherence),"Visit Completion":cap(visitCompletion),"Execution Standard":cap(executionAch),"Fridge Productivity":cap(div(fridgeProductivity,D.kpiTargets["Fridge Productivity"]||1))};
+ let weighted=0,weights=0;F.kpiConfig.forEach(r=>{if(!isIncludedFinal(r["Included Final"]))return;const key=kpiName(r.KPI),v=key?values[key]:null,w=kpiWeight(r.Weight);if(v!=null&&Number.isFinite(v)&&w!=null){weighted+=v*w;weights+=w}});
+ return {overall:weights?weighted/weights:null,actual,target,volumeAch,planned,actualVisits,visitCompletion,jpAdherence,fridgeProductivity,executionActual,executionTarget,executionAch,activeOutlets:outs.length}
+}
+function renderCards(){const k=aggregateKPIs(state());const cards=[["Overall KPI",k.overall,D.kpiTargets["Overall KPI"]||.8,"p"],["Volume Achievement",k.volumeAch,D.kpiTargets.Volume||1,"p",`Actual: ${num(k.actual)} &nbsp; Target: ${num(k.target)}`],["JP Adherence",k.jpAdherence,D.kpiTargets["JP Adherence"]||.8,"p"],["Visit Completion",k.visitCompletion,D.kpiTargets["Visit Completion"]||1,"p"],["Fridge Productivity",k.fridgeProductivity,D.kpiTargets["Fridge Productivity"]||1,"d"],["Active Outlets",k.activeOutlets,null,"n"],["Execution Standard",k.executionActual,k.executionTarget,"p"]];document.getElementById("cards").innerHTML=cards.map(c=>{const val=c[3]==="p"?pct(c[1]):c[3]==="d"?num(c[1],2):num(c[1]);const sub=c[4]??(c[2]==null?"":`Target: ${c[3]==="p"?pct(c[2]):num(c[2],2)}`);const ach=c[2]&&c[1]!=null?Math.min(c[1]/c[2],1):0;const color=c[1]==null?SAND:(c[2]&&c[1]>=c[2]?GREEN:NAVY);return `<div class="card"><div class="card-title">${c[0]}</div><div class="card-value" style="color:${color}">${val}</div><div class="card-sub">${sub}</div><div class="progress"><span style="width:${Math.max(0,ach*100)}%;background:${color}"></span></div></div>`}).join("")}
+function kill(id){if(charts[id]){charts[id].destroy();delete charts[id]}}
+function combo(id,rows,labelKey,aKey,tKey,hKey){kill(id);charts[id]=new Chart(document.getElementById(id),{type:"bar",data:{labels:rows.map(r=>r[labelKey]),datasets:[{label:"Actual",data:rows.map(r=>r[aKey]??0),backgroundColor:NAVY,borderRadius:5,yAxisID:"y"},{label:"Target",data:rows.map(r=>r[tKey]??0),backgroundColor:SAND,borderRadius:5,yAxisID:"y"},{label:"Achievement %",data:rows.map(r=>r[hKey]==null?null:r[hKey]*100),type:"line",borderColor:GREEN,backgroundColor:GREEN,borderWidth:3,tension:.35,borderDash:[6,4],pointRadius:4,pointBackgroundColor:"#fff",pointBorderColor:GREEN,pointBorderWidth:2,yAxisID:"y1"}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top",align:"center"},datalabels:{display:c=>c.datasetIndex===2,formatter:v=>v==null?"":Math.round(v)+"%",anchor:"end",align:"top",color:"#1f1f1f",font:{weight:"700",size:11}}},scales:{y:{beginAtZero:true,grid:{color:"#ece7dd"}},y1:{beginAtZero:true,position:"right",grid:{drawOnChartArea:false},ticks:{callback:v=>v+"%"}}}}})}
+function doughnut(id,labels,values){kill(id);charts[id]=new Chart(document.getElementById(id),{type:"doughnut",data:{labels,datasets:[{data:values,backgroundColor:[GREEN,"#d8b56a","#b94a3f"],borderColor:"#fff",borderWidth:3,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:"60%",plugins:{legend:{position:"bottom",align:"center"},datalabels:{formatter:(v,c)=>{const t=c.dataset.data.reduce((a,b)=>a+b,0);return t?Math.round(v/t*100)+"%":""},color:"#fff",font:{weight:"800",size:11}}}}})}
+function monthlyTargets(s){if(s.sku!=="ALL")return [];return F.targets.filter(r=>{const m=monthStartFromString(r["Target Month"]);return targetMatch(r,s)&&m.getFullYear()===MONTH_START.getFullYear()&&m.getMonth()===MONTH_START.getMonth()})}
+function mtdSales(s){return F.sales.filter(r=>salesMatch(r,s)&&inRange(r.Date,MONTH_START,LAST))}
+function volumePerfRow(labels,s){const julyTarget=sum(monthlyTargets(s),"Full Month Target"),wdFull=fullMonthWorkingDays(),wdElapsed=elapsedWorkingDays(),wdRemaining=remainingWorkingDays(),actual=sum(mtdSales(s),"Actual Volume"),mtdTarget=wdFull?julyTarget*wdElapsed/wdFull:null,dailyTarget=wdFull?julyTarget/wdFull:null,actualRR=wdElapsed?actual/wdElapsed:null,remaining=Math.max(julyTarget-actual,0),reqRR=wdRemaining?remaining/wdRemaining:null,projected=(actualRR||0)*wdFull;return {...labels,"July Target":julyTarget,"MTD Target":mtdTarget,"MTD Actual":actual,"% MTD Target Achieved":div(actual,mtdTarget),"% Monthly Target Achieved":div(actual,julyTarget),"Daily Target":dailyTarget,"Actual Run rate":actualRR,"Expected Daily required Run rate":reqRR,"Variance Monthly (Actual Vs Target)":actual-julyTarget,"Closing RR (Cadence)":div(projected,julyTarget)}}
+function buildManagerRows(){const s=state(), managers=unique(selectedOutlets(s),"KA Manager"), totalActual=sum(mtdSales(s),"Actual Volume");const rows=managers.map(manager=>{const row=volumePerfRow({"KA Manager":manager},{...s,manager});row["Contri %"]=div(row["MTD Actual"],totalActual);return row});if(s.manager==="ALL"&&s.segment==="ALL"&&s.outlet==="ALL"){const total=volumePerfRow({"KA Manager":"Grand Total"},s);total["Contri %"]=1;rows.push(total)}return rows}
+function buildOutletRows(){const s=state();return selectedOutlets(s).map(o=>volumePerfRow({"KA Manager":o["KA Manager"],"Outlet Name":o["Outlet Name"],"Outlet ID":o["Outlet ID"]},{...s,outlet:o["Outlet ID"]}))}
+function buildZeroRows(){return buildOutletRows().filter(r=>(Number(r["MTD Actual"])||0)===0).map(r=>({"KA Manager":r["KA Manager"],"Outlet Name":r["Outlet Name"],"Outlet ID":r["Outlet ID"]}))}
+function buildCharts(){const s=state(),{start,end}=periodBounds(s.period), managers=unique(selectedOutlets(s),"KA Manager");combo("managerVolume",managers.map(m=>{const k=aggregateKPIs({...s,manager:m},s.period);return {"KA Manager":m,Actual:k.actual,Target:k.target,Achievement:k.volumeAch}}),"KA Manager","Actual","Target","Achievement");combo("managerVisits",managers.map(m=>{const rows=visitRows({...s,manager:m},start,end),planned=sum(rows,"Planned Visits"),actual=sum(rows,"Actual Visits");return {"KA Manager":m,Planned:planned,Actual:actual,Achievement:div(actual,planned)}}),"KA Manager","Actual","Planned","Achievement");combo("managerExecution",managers.map(m=>{const exec=latestExecByOutlet(executionRows({...s,manager:m},start,end));const actual=exec.length?exec.reduce((a,r)=>a+(Number(r["Execution Actual"])||0),0)/exec.length:null,target=exec.length?exec.reduce((a,r)=>a+(Number(r["Execution Target"])||0),0)/exec.length:null;return {"KA Manager":m,Actual:actual,Target:target,Achievement:div(actual,target)}}),"KA Manager","Actual","Target","Achievement");combo("managerFridge",managers.map(m=>{const k=aggregateKPIs({...s,manager:m},s.period),t=D.kpiTargets["Fridge Productivity"]||1;return {"KA Manager":m,Actual:k.fridgeProductivity,Target:t,Achievement:div(k.fridgeProductivity,t)}}),"KA Manager","Actual","Target","Achievement");const outs=selectedOutlets(s).filter(r=>bool(r["Has Fridge"])),ids=new Set(outs.map(r=>r["Outlet ID"])),sales=salesRows(s,start,end).filter(r=>ids.has(r["Outlet ID"])),vol=new Map();sales.forEach(r=>vol.set(r["Outlet ID"],(vol.get(r["Outlet ID"])||0)+(Number(r["Actual Volume"])||0)));const days=daysInPeriod(start,end),counts={Productive:0,Underproductive:0,Inactive:0};outs.forEach(o=>{const p=(vol.get(o["Outlet ID"])||0)/days;if(p>=1)counts.Productive++;else if(p>0)counts.Underproductive++;else counts.Inactive++});doughnut("fridgeBreakdown",["Productive","Underproductive","Inactive"],[counts.Productive,counts.Underproductive,counts.Inactive]);const k=aggregateKPIs(s,s.period);combo("volumeSummary",[{Metric:"Volume",Actual:k.actual,Target:k.target,Achievement:k.volumeAch}],"Metric","Actual","Target","Achievement")}
+const managerCols=[["KA Manager","KA Manager","t"],["Contri %","Contri %","p"],["July Target","Jul Target","n"],["MTD Target","MTD Target","n"],["MTD Actual","MTD Actual","n"],["% MTD Target Achieved","MTD Ach %","p"],["% Monthly Target Achieved","Mon Ach %","p"],["Daily Target","Daily Tgt","n1"],["Actual Run rate","Actual RR","n1"],["Expected Daily required Run rate","Req. RR","n1"],["Variance Monthly (Actual Vs Target)","Mon Var.","n"],["Closing RR (Cadence)","Closing RR","cadence"]];
+const outletCols=[["KA Manager","KA Manager","t"],["Outlet Name","Outlet","t"],["Outlet ID","Outlet ID","t"],["July Target","Jul Target","n"],["MTD Target","MTD Target","n"],["MTD Actual","MTD Actual","n"],["% MTD Target Achieved","MTD Ach %","p"],["% Monthly Target Achieved","Mon Ach %","p"],["Daily Target","Daily Tgt","n1"],["Actual Run rate","Actual RR","n1"],["Expected Daily required Run rate","Req. RR","n1"],["Variance Monthly (Actual Vs Target)","Mon Var.","n"],["Closing RR (Cadence)","Closing RR","cadence"]];
+const zeroCols=[["KA Manager","KA Manager","t"],["Outlet Name","Outlet","t"],["Outlet ID","Outlet ID","t"]];
+function cell(v,t){if(t==="cadence"){const c=v==null||!Number.isFinite(Number(v))?"bad":(Number(v)>=1?"good":(Number(v)>=.9?"watch":"bad"));return `<span class="pill ${c}">${pct(v)}</span>`}if(t==="p")return pct(v);if(t==="n")return num(v,0);if(t==="n1")return num(v,1);return v??"—"}
+function table(id,rows,cols){document.getElementById(id).innerHTML=`<thead><tr>${cols.map(c=>`<th>${c[1]}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>{const vc=c[0]==="Variance Monthly (Actual Vs Target)"?((Number(r[c[0]])||0)>=0?" positive":" negative"):"";return `<td class="${c[2]==="t"?"left":""}${vc}">${cell(r[c[0]],c[2])}</td>`}).join("")}</tr>`).join("")}</tbody>`}
+let currentManagerRows=[],currentOutletRows=[],currentZeroRows=[];
+function renderTables(){currentManagerRows=buildManagerRows();currentOutletRows=buildOutletRows();currentZeroRows=buildZeroRows();table("managerTable",currentManagerRows,managerCols);table("outletTable",currentOutletRows,outletCols);table("zeroSalesTable",currentZeroRows,zeroCols)}
+function csv(name,rows,cols){const q=v=>'"'+String(v??"").replaceAll('"','""')+'"';const out=[cols.map(c=>q(c[1])).join(","),...rows.map(r=>cols.map(c=>q(r[c[0]])).join(","))].join("\n");const b=new Blob(["\ufeff"+out],{type:"text/csv"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;a.click();URL.revokeObjectURL(a.href)}
+function refreshOutletOptions(){const s=state(),cur=document.getElementById("outlet").value;const vals=F.outlets.filter(r=>(s.manager==="ALL"||r["KA Manager"]===s.manager)&&(s.segment==="ALL"||r.Segment===s.segment));fill("outlet",vals,v=>v["Outlet ID"]+" — "+v["Outlet Name"],v=>v["Outlet ID"]);if(vals.some(v=>v["Outlet ID"]===cur))document.getElementById("outlet").value=cur}
+function renderAll(){renderCards();buildCharts();renderTables()}
+function init(payload){D=payload;F=D.facts;LAST=new Date(D.meta.lastDataDate+"T00:00:00");MONTH_START=new Date(LAST.getFullYear(),LAST.getMonth(),1);YEAR_START=new Date(LAST.getFullYear(),0,1);fill("manager",unique(F.outlets,"KA Manager"));fill("segment",unique(F.outlets,"Segment"));fill("outlet",F.outlets,v=>v["Outlet ID"]+" — "+v["Outlet Name"],v=>v["Outlet ID"]);fill("sku",unique(F.sales,"SKU"));fill("category",unique(F.sales,"Category"));document.getElementById("loader").style.display="none";document.getElementById("page").style.display="block";document.getElementById("footer").textContent=`Generated from single CSV extract • Last data date ${D.meta.lastDataDate||""}`;renderAll()}
+document.getElementById("clear").onclick=()=>{["manager","segment","outlet","sku","category"].forEach(id=>document.getElementById(id).value="ALL");document.getElementById("period").value="MTD";refreshOutletOptions();renderAll()};
+["period","outlet","sku","category"].forEach(id=>document.getElementById(id).onchange=renderAll);
+["manager","segment"].forEach(id=>document.getElementById(id).onchange=()=>{refreshOutletOptions();renderAll()});
+document.getElementById("exportManager").onclick=()=>csv("KA_Manager_Volume_Performance.csv",currentManagerRows,managerCols);
+document.getElementById("exportOutlet").onclick=()=>csv("Outlet_Volume_Performance.csv",currentOutletRows,outletCols);
+document.getElementById("exportZeroSales").onclick=()=>csv("Zero_Sales_Outlets.csv",currentZeroRows,zeroCols);
+document.getElementById("csvInput").addEventListener("change",async e=>{try{const file=e.target.files&&e.target.files[0];if(!file)return;setStatus("Loading "+file.name+"...");const rows=await parseCSV(file);const payload=payloadFromSingleCSV(rows);setStatus("Loaded successfully.","success");init(payload)}catch(err){console.error(err);setStatus(err.message,"error")}});
+</script>
+</body></html>
