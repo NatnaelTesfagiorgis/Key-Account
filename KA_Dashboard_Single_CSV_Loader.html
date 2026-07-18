@@ -144,7 +144,16 @@ function fillPeriodOptions(){
     });
 }
 function fill(id,vals,label=v=>v,value=v=>v){const e=document.getElementById(id);e.innerHTML='<option value="ALL">All</option>';vals.forEach(v=>{const o=document.createElement("option");o.value=value(v);o.textContent=label(v);e.appendChild(o)})}
-function state(){return {period:document.getElementById("period").value,manager:document.getElementById("manager").value,segment:document.getElementById("segment").value,outlet:document.getElementById("outlet").value,sku:document.getElementById("sku").value,category:document.getElementById("category").value}}
+function state(){
+  return {
+    period:document.getElementById("period").value,
+    manager:document.getElementById("manager").value,
+    segment:document.getElementById("segment").value,
+    outlet:"ALL",
+    sku:document.getElementById("sku").value,
+    category:document.getElementById("category").value
+  };
+}}
 function inRange(v,start,end){const d=dateObj(v);return d>=start&&d<=end}
 function monthEnd(d){return new Date(d.getFullYear(),d.getMonth()+1,0)}
 function monthStartFromString(v){const d=dateObj(v);return new Date(d.getFullYear(),d.getMonth(),1)}
@@ -242,12 +251,36 @@ function table(id,rows,cols){document.getElementById(id).innerHTML=`<thead><tr>$
       if(c[0]==="Daily Target - Actual RR") vc=((Number(r[c[0]])||0)<=0?" positive":" negative");
       return `<td class="${c[2]==="t"?"left":""}${vc}">${cell(r[c[0]],c[2])}</td>`}).join("")}</tr>`).join("")}</tbody>`}
 let currentManagerRows=[],currentOutletRows=[],currentZeroRows=[];
+
+function selectedOutletTableName(){
+  const e=document.getElementById("outletTableSelector");
+  return e ? e.value : "ALL";
+}
+
+function fillOutletTableSelector(rows){
+  let e=document.getElementById("outletTableSelector");
+  if(!e) return;
+
+  const current=e.value || "ALL";
+  const names=[...new Set(rows.map(r=>r["Outlet Name"]).filter(v=>v!==undefined&&v!==null&&String(v).trim()!==""))].sort();
+
+  e.innerHTML='<option value="ALL">All outlets</option>';
+  names.forEach(n=>{
+    const o=document.createElement("option");
+    o.value=n;
+    o.textContent=n;
+    e.appendChild(o);
+  });
+
+  e.value = names.includes(current) ? current : "ALL";
+}
+
 function renderTables(){currentManagerRows=buildManagerRows();currentOutletRows=buildOutletRows();currentZeroRows=buildZeroRows();table("managerTable",currentManagerRows,managerCols);table("outletTable",currentOutletRows,outletCols);table("zeroSalesTable",currentZeroRows,zeroCols)}
 function csv(name,rows,cols){const q=v=>'"'+String(v??"").replaceAll('"','""')+'"';const out=[cols.map(c=>q(c[1])).join(","),...rows.map(r=>cols.map(c=>q(r[c[0]])).join(","))].join("\n");const b=new Blob(["\ufeff"+out],{type:"text/csv"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;a.click();URL.revokeObjectURL(a.href)}
 function refreshOutletOptions(){const s=state(),cur=document.getElementById("outlet").value;const vals=F.outlets.filter(r=>(s.manager==="ALL"||r["KA Manager"]===s.manager)&&(s.segment==="ALL"||r.Segment===s.segment));fill("outlet",vals,v=>v["Outlet ID"]+" — "+v["Outlet Name"],v=>v["Outlet ID"]);if(vals.some(v=>v["Outlet ID"]===cur))document.getElementById("outlet").value=cur}
 function renderAll(){renderCards();buildCharts();renderTables()}
 function init(payload){D=payload;F=D.facts;LAST=new Date(D.meta.lastDataDate+"T00:00:00");MONTH_START=new Date(LAST.getFullYear(),LAST.getMonth(),1);YEAR_START=new Date(LAST.getFullYear(),0,1);fillPeriodOptions();fill("manager",unique(F.outlets,"KA Manager"));fill("segment",unique(F.outlets,"Segment"));fill("outlet",F.outlets,v=>v["Outlet ID"]+" — "+v["Outlet Name"],v=>v["Outlet ID"]);fill("sku",unique(F.sales,"SKU"));fill("category",unique(F.sales,"Category"));document.getElementById("loader").style.display="none";document.getElementById("page").style.display="block";document.getElementById("footer").textContent=`Generated from single CSV extract • Last data date ${D.meta.lastDataDate||""}`;renderAll()}
-document.getElementById("clear").onclick=()=>{["manager","segment","outlet","sku","category"].forEach(id=>document.getElementById(id).value="ALL");document.getElementById("period").value="MTD";refreshOutletOptions();renderAll()};
+document.getElementById("clear").onclick=()=>{["manager","segment","sku","category"].forEach(id=>document.getElementById(id).value="ALL");const ots=document.getElementById("outletTableSelector");if(ots)ots.value="ALL";document.getElementById("period").value="MTD";refreshOutletOptions();renderAll()};
 ["period","outlet","sku","category"].forEach(id=>document.getElementById(id).onchange=renderAll);
 ["manager","segment"].forEach(id=>document.getElementById(id).onchange=()=>{refreshOutletOptions();renderAll()});
 document.getElementById("exportManager").onclick=()=>csv("KA_Manager_Volume_Performance.csv",currentManagerRows,managerCols);
