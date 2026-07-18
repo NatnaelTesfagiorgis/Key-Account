@@ -7423,11 +7423,11 @@ calendar,,,,,,,,,2026-12-30,,,,,,,,,,,,,,,,,,,True,,,,,
 calendar,,,,,,,,,2026-12-31,,,,,,,,,,,,,,,,,,,True,,,,,
 kpiConfig,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Volume,0.5,True,,
 kpiConfig,,,,,,,,,,,,,,,,,,,,,,,,,,,,,JP Adherence,0.25,True,,
-kpiConfig,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Execution Standard,0.0,True,,
+kpiConfig,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Execution Standard,0.25,False,,
 kpiConfig,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Visit Completion,0.0,False,,
 kpiConfig,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Fridge Productivity,0.0,False,,
 meta,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,sourceFile,C:\Users\Natnael.Tesfagiorgis\OneDrive - Swinkels\Desktop\python\Key Account\Key Accout Report.xlsx
-meta,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,generatedAt,2026-07-19 02:29:21
+meta,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,generatedAt,2026-07-19 02:40:07
 meta,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,lastDataDate,2026-07-16
 meta,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,currentMonthStart,2026-07-01
 meta,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,currentYearStart,2026-01-01
