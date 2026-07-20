@@ -1365,7 +1365,7 @@
 2026-07-14,2906158,1.0,0.0,0.0,0.0,,Mesekelgna Leyu Kurt,Alemayehu,Unspecified
 2026-07-14,2953966,1.0,0.0,0.0,0.0,,Worka Buna,Alemayehu,Unspecified
 2026-07-15,1001420,1.0,0.0,0.0,0.0,,Shewa Hotel,Chandra,Unspecified
-2026-07-15,1001526,1.0,0.0,0.0,0.0,,Genesis Fishe,Alemayehu,Unspecified
+2026-07-15,1001526,1.0,1.0,1.0,1.0,1.0,Genesis Fishe,Alemayehu,Unspecified
 2026-07-15,1001901,1.0,0.0,0.0,0.0,,St.Gorge House,Chandra,Unspecified
 2026-07-15,1002658,1.0,0.0,0.0,0.0,,Yilma Hotel,Chandra,Unspecified
 2026-07-15,1002659,1.0,0.0,0.0,0.0,,Tedila Hotel,Chandra,Unspecified
@@ -1376,12 +1376,13 @@
 2026-07-15,1002844,1.0,0.0,0.0,0.0,,National Hotel,Chandra,Unspecified
 2026-07-15,1002879,1.0,0.0,0.0,0.0,,Roma Bar,Chandra,Unspecified
 2026-07-15,1002955,1.0,0.0,0.0,0.0,,KG Corner Bar and Restaurant,Chandra,Unspecified
-2026-07-15,1004020,1.0,0.0,0.0,0.0,,Kategna Bar and Restaurant,Netsanet,Unspecified
-2026-07-15,1004044,1.0,0.0,0.0,0.0,,Desalech Kitfo bet,Netsanet,Unspecified
+2026-07-15,1004020,1.0,1.0,1.0,1.0,1.0,Kategna Bar and Restaurant,Netsanet,Unspecified
+2026-07-15,1004044,1.0,1.0,1.0,1.0,1.0,Desalech Kitfo bet,Netsanet,Unspecified
 2026-07-15,1005213,1.0,0.0,0.0,0.0,,Sunshine Bar and Restaurant,Chandra,Unspecified
-2026-07-15,1023776,1.0,0.0,0.0,0.0,,Sami wendmamach,Netsanet,Unspecified
-2026-07-15,1024681,1.0,0.0,0.0,0.0,,Sakura Japanese Restaurant,Netsanet,Unspecified
-2026-07-15,1024795,1.0,0.0,0.0,0.0,,men yitebes,Netsanet,Unspecified
+2026-07-15,1011906,0.0,1.0,0.0,,0.0,Momona Hotel,Netsanet,Unspecified
+2026-07-15,1023776,1.0,1.0,1.0,1.0,1.0,Sami wendmamach,Netsanet,Unspecified
+2026-07-15,1024681,1.0,1.0,1.0,1.0,1.0,Sakura Japanese Restaurant,Netsanet,Unspecified
+2026-07-15,1024795,1.0,1.0,1.0,1.0,1.0,men yitebes,Netsanet,Unspecified
 2026-07-15,1025186,1.0,1.0,1.0,1.0,1.0,Radisson Blue Hotel,London,Unspecified
 2026-07-15,1025203,1.0,1.0,1.0,1.0,1.0,Jupiter International Hotel,London,Unspecified
 2026-07-15,1025235,1.0,1.0,1.0,1.0,1.0,Intercontinental Hotel,London,Unspecified
@@ -1389,64 +1390,64 @@
 2026-07-15,1025334,1.0,1.0,1.0,1.0,1.0,Top one house,London,Unspecified
 2026-07-15,1025492,1.0,1.0,1.0,1.0,1.0,Efoy Pizza,London,Unspecified
 2026-07-15,1026682,1.0,1.0,1.0,1.0,1.0,Hilton Addis Ababa Hotel,London,Unspecified
-2026-07-15,1048146,1.0,0.0,0.0,0.0,,Shi jia zhuang restaurant,Netsanet,Unspecified
-2026-07-15,1125087,1.0,0.0,0.0,0.0,,Etiopian Skylight Hotel,Netsanet,Unspecified
-2026-07-15,1126157,1.0,0.0,0.0,0.0,,Sherar Addis Hotel,Netsanet,Unspecified
-2026-07-15,1130364,1.0,0.0,0.0,0.0,,the address bar,Netsanet,Unspecified
-2026-07-15,1203098,1.0,0.0,0.0,0.0,,2000 Habesha Cultural House No2,Netsanet,Unspecified
-2026-07-15,1211178,1.0,0.0,0.0,0.0,,Shan Tou Special chinesee,Netsanet,Unspecified
+2026-07-15,1048146,1.0,1.0,1.0,1.0,1.0,Shi jia zhuang restaurant,Netsanet,Unspecified
+2026-07-15,1125087,1.0,1.0,1.0,1.0,1.0,Etiopian Skylight Hotel,Netsanet,Unspecified
+2026-07-15,1126157,1.0,1.0,1.0,1.0,1.0,Sherar Addis Hotel,Netsanet,Unspecified
+2026-07-15,1130364,1.0,1.0,1.0,1.0,1.0,the address bar,Netsanet,Unspecified
+2026-07-15,1203098,1.0,1.0,1.0,1.0,1.0,2000 Habesha Cultural House No2,Netsanet,Unspecified
+2026-07-15,1211178,1.0,1.0,1.0,1.0,1.0,Shan Tou Special chinesee,Netsanet,Unspecified
 2026-07-15,1567318,1.0,0.0,0.0,0.0,,Hakim Bar and Restaurant,Chandra,Unspecified
 2026-07-15,1567781,1.0,0.0,0.0,0.0,,Cheru medihaniyalem  liyu kurt,Alemayehu,Unspecified
-2026-07-15,1579550,1.0,0.0,0.0,0.0,,bricks lounge,Alemayehu,Unspecified
+2026-07-15,1579550,1.0,1.0,1.0,1.0,1.0,bricks lounge,Alemayehu,Unspecified
 2026-07-15,1685640,1.0,1.0,1.0,1.0,1.0,Noble House,London,Unspecified
 2026-07-15,1919290,1.0,0.0,0.0,0.0,,Entoto Restaurant,Netsanet,Unspecified
-2026-07-15,2003128,1.0,0.0,0.0,0.0,,wecare special kurt,Alemayehu,Unspecified
-2026-07-15,2123024,1.0,0.0,0.0,0.0,,Hop Lounge,Alemayehu,Unspecified
-2026-07-15,2196866,1.0,0.0,0.0,0.0,,Yonas chercher buchery no3,Alemayehu,Unspecified
-2026-07-15,2254017,1.0,0.0,0.0,0.0,,Fekire  kunespagna,Alemayehu,Unspecified
+2026-07-15,2003128,1.0,1.0,1.0,1.0,1.0,wecare special kurt,Alemayehu,Unspecified
+2026-07-15,2123024,1.0,1.0,1.0,1.0,1.0,Hop Lounge,Alemayehu,Unspecified
+2026-07-15,2196866,1.0,1.0,1.0,1.0,1.0,Yonas chercher buchery no3,Alemayehu,Unspecified
+2026-07-15,2254017,1.0,1.0,1.0,1.0,1.0,Fekire  kunespagna,Alemayehu,Unspecified
 2026-07-15,2568496,1.0,1.0,1.0,1.0,1.0,Henom lounge,London,Unspecified
-2026-07-15,2608618,1.0,0.0,0.0,0.0,,lexury winner  fiyel bet,Alemayehu,Unspecified
-2026-07-15,2729788,1.0,0.0,0.0,0.0,,Romanat hotel,Netsanet,Unspecified
-2026-07-15,2785966,1.0,0.0,0.0,0.0,,zegeye butchery,Netsanet,Unspecified
-2026-07-15,2837203,1.0,0.0,0.0,0.0,,Zegeye kurt bet,Alemayehu,Unspecified
-2026-07-15,2841712,1.0,0.0,0.0,0.0,,Yonase chercher,Netsanet,Unspecified
-2026-07-15,2930700,1.0,0.0,0.0,0.0,,Radha`s indian Restaurant,Netsanet,Unspecified
-2026-07-15,2933482,1.0,0.0,0.0,0.0,,Chuchu supermarket and restaurant,Alemayehu,Unspecified
-2026-07-15,2938660,1.0,0.0,0.0,0.0,,L-classice,Alemayehu,Unspecified
-2026-07-15,2947304,1.0,0.0,0.0,0.0,,Noble plate,Alemayehu,Unspecified
+2026-07-15,2608618,1.0,1.0,1.0,1.0,1.0,lexury winner  fiyel bet,Alemayehu,Unspecified
+2026-07-15,2729788,1.0,1.0,1.0,1.0,1.0,Romanat hotel,Netsanet,Unspecified
+2026-07-15,2785966,1.0,1.0,1.0,1.0,1.0,zegeye butchery,Netsanet,Unspecified
+2026-07-15,2837203,1.0,1.0,1.0,1.0,1.0,Zegeye kurt bet,Alemayehu,Unspecified
+2026-07-15,2841712,1.0,1.0,1.0,1.0,1.0,Yonase chercher,Netsanet,Unspecified
+2026-07-15,2930700,1.0,1.0,1.0,1.0,1.0,Radha`s indian Restaurant,Netsanet,Unspecified
+2026-07-15,2933482,1.0,1.0,1.0,1.0,1.0,Chuchu supermarket and restaurant,Alemayehu,Unspecified
+2026-07-15,2938660,1.0,1.0,1.0,1.0,1.0,L-classice,Alemayehu,Unspecified
+2026-07-15,2947304,1.0,1.0,1.0,1.0,1.0,Noble plate,Alemayehu,Unspecified
 2026-07-15,296038,1.0,0.0,0.0,0.0,,Table 5,London,Unspecified
 2026-07-15,2960501,1.0,0.0,0.0,0.0,,the grand place Hotel,London,Unspecified
-2026-07-16,1000358,1.0,0.0,0.0,0.0,,Harmony Hotel,Netsanet,Unspecified
-2026-07-16,1000359,1.0,0.0,0.0,0.0,,Kaleb Hotel,Netsanet,Unspecified
-2026-07-16,1000401,1.0,0.0,0.0,0.0,,Beer Garden Inn.,Netsanet,Unspecified
-2026-07-16,1000403,1.0,0.0,0.0,0.0,,Bonanza Addis Hotel,Netsanet,Unspecified
-2026-07-16,1000506,1.0,0.0,0.0,0.0,,Saro-maria Hotel,Netsanet,Unspecified
-2026-07-16,1000507,1.0,0.0,0.0,0.0,,Friendship Hotel,Netsanet,Unspecified
+2026-07-16,1000358,1.0,1.0,1.0,1.0,1.0,Harmony Hotel,Netsanet,Unspecified
+2026-07-16,1000359,1.0,1.0,1.0,1.0,1.0,Kaleb Hotel,Netsanet,Unspecified
+2026-07-16,1000401,1.0,1.0,1.0,1.0,1.0,Beer Garden Inn.,Netsanet,Unspecified
+2026-07-16,1000403,1.0,1.0,1.0,1.0,1.0,Bonanza Addis Hotel,Netsanet,Unspecified
+2026-07-16,1000506,1.0,1.0,1.0,1.0,1.0,Saro-maria Hotel,Netsanet,Unspecified
+2026-07-16,1000507,1.0,1.0,1.0,1.0,1.0,Friendship Hotel,Netsanet,Unspecified
 2026-07-16,1001215,1.0,1.0,1.0,1.0,1.0,Pasfic Hotel,London,Unspecified
 2026-07-16,1001971,1.0,1.0,1.0,1.0,1.0,Yod Abyssinya Hotel,London,Unspecified
 2026-07-16,1001973,1.0,1.0,1.0,1.0,1.0,Archi Hotel,London,Unspecified
 2026-07-16,1001998,1.0,0.0,0.0,0.0,,fike kurt and kitfo,London,Unspecified
-2026-07-16,1003509,1.0,0.0,0.0,0.0,,Hiber Ethiopia Cultural House,Netsanet,Unspecified
+2026-07-16,1003509,1.0,1.0,1.0,1.0,1.0,Hiber Ethiopia Cultural House,Netsanet,Unspecified
 2026-07-16,1008852,1.0,0.0,0.0,0.0,,Joni Hotel,Chandra,Unspecified
-2026-07-16,1009720,1.0,0.0,0.0,0.0,,Sol Dallas,Alemayehu,Unspecified
-2026-07-16,1011735,1.0,0.0,0.0,0.0,,Sabon Hotel,Netsanet,Unspecified
+2026-07-16,1009720,1.0,1.0,1.0,1.0,1.0,Sol Dallas,Alemayehu,Unspecified
+2026-07-16,1011735,1.0,1.0,1.0,1.0,1.0,Sabon Hotel,Netsanet,Unspecified
 2026-07-16,1015124,1.0,0.0,0.0,0.0,,Golden plus Bar and Resturant,Chandra,Unspecified
 2026-07-16,1018357,1.0,0.0,0.0,0.0,,Eliana Hotel,Chandra,Unspecified
 2026-07-16,1018616,1.0,0.0,0.0,0.0,,foyate bar and restaurant,London,Unspecified
 2026-07-16,1024369,1.0,0.0,0.0,0.0,,Embilta Hotel,Chandra,Unspecified
 2026-07-16,1048012,1.0,1.0,1.0,1.0,1.0,Top Ten Hotel,London,Unspecified
 2026-07-16,1055371,1.0,1.0,1.0,1.0,1.0,Bellevue Hotel,London,Unspecified
-2026-07-16,1057503,1.0,0.0,0.0,0.0,,Best Western Plus Addis Ababa Hotel,Netsanet,Unspecified
-2026-07-16,1057632,1.0,0.0,0.0,0.0,,Hanom Hotel,Netsanet,Unspecified
-2026-07-16,1065627,1.0,0.0,0.0,0.0,,Medal Hotel,Netsanet,Unspecified
-2026-07-16,1091718,1.0,0.0,0.0,0.0,,Green Bar and restaurant,Alemayehu,Unspecified
-2026-07-16,1202828,1.0,0.0,0.0,0.0,,Da'amat Hotel,Netsanet,Unspecified
-2026-07-16,1204750,1.0,0.0,0.0,0.0,,Tiru Kitfo Bet,Netsanet,Unspecified
+2026-07-16,1057503,1.0,1.0,1.0,1.0,1.0,Best Western Plus Addis Ababa Hotel,Netsanet,Unspecified
+2026-07-16,1057632,1.0,1.0,1.0,1.0,1.0,Hanom Hotel,Netsanet,Unspecified
+2026-07-16,1065627,1.0,1.0,1.0,1.0,1.0,Medal Hotel,Netsanet,Unspecified
+2026-07-16,1091718,1.0,1.0,1.0,1.0,1.0,Green Bar and restaurant,Alemayehu,Unspecified
+2026-07-16,1202828,1.0,1.0,1.0,1.0,1.0,Da'amat Hotel,Netsanet,Unspecified
+2026-07-16,1204750,1.0,1.0,1.0,1.0,1.0,Tiru Kitfo Bet,Netsanet,Unspecified
 2026-07-16,1207099,1.0,0.0,0.0,0.0,,Asko level 5 Hotel,Chandra,Unspecified
-2026-07-16,1213545,1.0,0.0,0.0,0.0,,70 Dereja,Alemayehu,Unspecified
+2026-07-16,1213545,1.0,1.0,1.0,1.0,1.0,70 Dereja,Alemayehu,Unspecified
 2026-07-16,1214760,1.0,1.0,1.0,1.0,1.0,Melala Hotel,London,Unspecified
-2026-07-16,1216866,1.0,0.0,0.0,0.0,,On Time,Alemayehu,Unspecified
-2026-07-16,1233300,1.0,0.0,0.0,0.0,,Red Dragon china restaurant,Netsanet,Unspecified
+2026-07-16,1216866,1.0,1.0,1.0,1.0,1.0,On Time,Alemayehu,Unspecified
+2026-07-16,1233300,1.0,1.0,1.0,1.0,1.0,Red Dragon china restaurant,Netsanet,Unspecified
 2026-07-16,1235717,1.0,0.0,0.0,0.0,,Monarch Hotel,Chandra,Unspecified
 2026-07-16,1237297,1.0,0.0,0.0,0.0,,Berlottue Hotel,London,Unspecified
 2026-07-16,1237298,1.0,1.0,1.0,1.0,1.0,Aselefech Mergiya Hotel,London,Unspecified
@@ -1458,22 +1459,25 @@
 2026-07-16,1716706,1.0,1.0,1.0,1.0,1.0,Sole Kurt And Kitfo,London,Unspecified
 2026-07-16,2048809,1.0,0.0,0.0,0.0,,abem Hotel,Chandra,Unspecified
 2026-07-16,2275518,1.0,0.0,0.0,0.0,,Bamies Bistro,Alemayehu,Unspecified
-2026-07-16,2495983,1.0,0.0,0.0,0.0,,Hundaf bar no3,Alemayehu,Unspecified
-2026-07-16,2675988,1.0,0.0,0.0,0.0,,Tadese Asa Bete,Alemayehu,Unspecified
+2026-07-16,2495983,1.0,1.0,1.0,1.0,1.0,Hundaf bar no3,Alemayehu,Unspecified
+2026-07-16,2675988,1.0,1.0,1.0,1.0,1.0,Tadese Asa Bete,Alemayehu,Unspecified
+2026-07-16,2730033,0.0,1.0,0.0,,0.0,Yemechen fiyele bet n 02,Alemayehu,Unspecified
 2026-07-16,2739931,1.0,0.0,0.0,0.0,,Habesha kurt and kitfo,London,Unspecified
 2026-07-16,2773109,1.0,0.0,0.0,0.0,,Hanot Bar and Restautrant,Alemayehu,Unspecified
-2026-07-16,2780028,1.0,0.0,0.0,0.0,,12 Menota lounge,Alemayehu,Unspecified
-2026-07-16,2845807,1.0,0.0,0.0,0.0,,She Semaneya,Alemayehu,Unspecified
-2026-07-16,2910023,1.0,0.0,0.0,0.0,,Geche Asa Bete,Alemayehu,Unspecified
-2026-07-16,2931271,1.0,0.0,0.0,0.0,,70 Dereja,Alemayehu,Unspecified
-2026-07-16,2951769,1.0,0.0,0.0,0.0,,Yebate Kitfo,Alemayehu,Unspecified
-2026-07-16,2957288,1.0,0.0,0.0,0.0,,Cheru Medanialem,Netsanet,Unspecified
+2026-07-16,2780028,1.0,1.0,1.0,1.0,1.0,12 Menota lounge,Alemayehu,Unspecified
+2026-07-16,2845807,1.0,1.0,1.0,1.0,1.0,She Semaneya,Alemayehu,Unspecified
+2026-07-16,2910023,1.0,1.0,1.0,1.0,1.0,Geche Asa Bete,Alemayehu,Unspecified
+2026-07-16,2931271,1.0,1.0,1.0,1.0,1.0,70 Dereja,Alemayehu,Unspecified
+2026-07-16,2951769,1.0,1.0,1.0,1.0,1.0,Yebate Kitfo,Alemayehu,Unspecified
+2026-07-16,2957288,1.0,1.0,1.0,1.0,1.0,Cheru Medanialem,Netsanet,Unspecified
 2026-07-16,2957911,1.0,1.0,1.0,1.0,1.0,hailu liyu Kurt ena kitfo,London,Unspecified
 2026-07-17,1000089,1.0,0.0,0.0,0.0,,Messob Habesha Bucher,London,Unspecified
-2026-07-17,1001652,1.0,0.0,0.0,0.0,,Kertina butchery(gerji t,Alemayehu,Unspecified
-2026-07-17,1003655,1.0,0.0,0.0,0.0,,Nexus Hotel,Alemayehu,Unspecified
+2026-07-17,1000772,0.0,1.0,0.0,,0.0,Yober Hotel,Netsanet,Unspecified
+2026-07-17,1001652,1.0,1.0,1.0,1.0,1.0,Kertina butchery(gerji t,Alemayehu,Unspecified
+2026-07-17,1003056,0.0,1.0,0.0,,0.0,Zekir buchery,Alemayehu,Unspecified
+2026-07-17,1003655,1.0,1.0,1.0,1.0,1.0,Nexus Hotel,Alemayehu,Unspecified
 2026-07-17,1006224,1.0,0.0,0.0,0.0,,Soramba Hotel,London,Unspecified
-2026-07-17,1011907,1.0,0.0,0.0,0.0,,Friendship Supermarket,Netsanet,Unspecified
+2026-07-17,1011907,1.0,1.0,1.0,1.0,1.0,Friendship Supermarket,Netsanet,Unspecified
 2026-07-17,1012278,2.0,0.0,0.0,0.0,,Kings Hotel,Chandra,Unspecified
 2026-07-17,1017208,1.0,0.0,0.0,0.0,,Nathional thaiter,Chandra,Unspecified
 2026-07-17,1017707,1.0,0.0,0.0,0.0,,Mekonenoch recreational center,Chandra,Unspecified
@@ -1484,41 +1488,51 @@
 2026-07-17,1020487,2.0,0.0,0.0,0.0,,yetemche Traditional house,London,Unspecified
 2026-07-17,1022948,1.0,0.0,0.0,0.0,,Afro politan Hotel,London,Unspecified
 2026-07-17,1024221,1.0,0.0,0.0,0.0,,Ghion Hotel,Chandra,Unspecified
+2026-07-17,1024273,0.0,1.0,0.0,,0.0,Magnolia Hotel,Netsanet,Unspecified
 2026-07-17,1024290,1.0,0.0,0.0,0.0,,Ethiopia Hotel,Chandra,Unspecified
 2026-07-17,1024439,1.0,0.0,0.0,0.0,,Ras Hotel,Chandra,Unspecified
 2026-07-17,1024557,1.0,0.0,0.0,0.0,,Canvas Lounge,Chandra,Unspecified
-2026-07-17,1024822,1.0,0.0,0.0,0.0,,China Town Bar and Restaurant,Netsanet,Unspecified
+2026-07-17,1024822,1.0,1.0,1.0,1.0,1.0,China Town Bar and Restaurant,Netsanet,Unspecified
 2026-07-17,1024855,1.0,0.0,0.0,0.0,,Habesha butchery,Netsanet,Unspecified
-2026-07-17,1025643,1.0,0.0,0.0,0.0,,Lalibela Hotel,Netsanet,Unspecified
+2026-07-17,1025643,1.0,1.0,1.0,1.0,1.0,Lalibela Hotel,Netsanet,Unspecified
 2026-07-17,1026662,1.0,0.0,0.0,0.0,,Filwuha Hotel,Chandra,Unspecified
 2026-07-17,1028182,1.0,0.0,0.0,0.0,,Sheraton Addis Hotel,Chandra,Unspecified
-2026-07-17,1048516,1.0,0.0,0.0,0.0,,Samra hotel,Netsanet,Unspecified
+2026-07-17,1048516,1.0,1.0,1.0,1.0,1.0,Samra hotel,Netsanet,Unspecified
 2026-07-17,1048859,1.0,0.0,0.0,0.0,,Holiday hotel,London,Unspecified
-2026-07-17,1055871,1.0,0.0,0.0,0.0,,Natani,Netsanet,Unspecified
+2026-07-17,1055871,1.0,1.0,1.0,1.0,1.0,Natani,Netsanet,Unspecified
+2026-07-17,1066345,0.0,1.0,0.0,,0.0,Panda Restaurant,Netsanet,Unspecified
 2026-07-17,1070790,1.0,0.0,0.0,0.0,,The Bonroyal Hotel,Netsanet,Unspecified
-2026-07-17,1126810,1.0,0.0,0.0,0.0,,Dusk Addis,Alemayehu,Unspecified
+2026-07-17,1126810,1.0,1.0,1.0,1.0,1.0,Dusk Addis,Alemayehu,Unspecified
 2026-07-17,1193110,1.0,0.0,0.0,0.0,,Mandela bar,Alemayehu,Unspecified
-2026-07-17,1214332,1.0,0.0,0.0,0.0,,Rebka butchery,Alemayehu,Unspecified
-2026-07-17,1214967,1.0,0.0,0.0,0.0,,Konark Indian Hotel,Netsanet,Unspecified
-2026-07-17,1215982,1.0,0.0,0.0,0.0,,Kertina butchery(korean,Alemayehu,Unspecified
-2026-07-17,1571808,1.0,0.0,0.0,0.0,,Seven Hotel,Alemayehu,Unspecified
+2026-07-17,1214332,1.0,1.0,1.0,1.0,1.0,Rebka butchery,Alemayehu,Unspecified
+2026-07-17,1214967,1.0,1.0,1.0,1.0,1.0,Konark Indian Hotel,Netsanet,Unspecified
+2026-07-17,1215982,1.0,1.0,1.0,1.0,1.0,Kertina butchery(korean,Alemayehu,Unspecified
+2026-07-17,1571808,1.0,1.0,1.0,1.0,1.0,Seven Hotel,Alemayehu,Unspecified
 2026-07-17,1633255,1.0,0.0,0.0,0.0,,ze bridge bar,London,Unspecified
 2026-07-17,16827727,1.0,0.0,0.0,0.0,,Kot Hotel,Alemayehu,Unspecified
-2026-07-17,1896552,1.0,0.0,0.0,0.0,,china restsurant,Netsanet,Unspecified
+2026-07-17,1896552,1.0,1.0,1.0,1.0,1.0,china restsurant,Netsanet,Unspecified
 2026-07-17,2026360,2.0,0.0,0.0,0.0,,fikre kunspagna,London,Unspecified
 2026-07-17,2030063,1.0,0.0,0.0,0.0,,Ermiyas bar,London,Unspecified
-2026-07-17,2170889,1.0,0.0,0.0,0.0,,Ende Bate bar,Alemayehu,Unspecified
-2026-07-17,2174101,1.0,0.0,0.0,0.0,,Gangam korea restaurant,Netsanet,Unspecified
-2026-07-17,2180441,1.0,0.0,0.0,0.0,,Atmosphere lounge,Netsanet,Unspecified
-2026-07-17,2336521,1.0,0.0,0.0,0.0,,Mereb Butchery,Alemayehu,Unspecified
-2026-07-17,2350521,1.0,0.0,0.0,0.0,,TAO hotal,Netsanet,Unspecified
+2026-07-17,2170889,1.0,1.0,1.0,1.0,1.0,Ende Bate bar,Alemayehu,Unspecified
+2026-07-17,2174101,1.0,1.0,1.0,1.0,1.0,Gangam korea restaurant,Netsanet,Unspecified
+2026-07-17,2180441,1.0,1.0,1.0,1.0,1.0,Atmosphere lounge,Netsanet,Unspecified
+2026-07-17,2336521,1.0,1.0,1.0,1.0,1.0,Mereb Butchery,Alemayehu,Unspecified
+2026-07-17,2350521,1.0,1.0,1.0,1.0,1.0,TAO hotal,Netsanet,Unspecified
 2026-07-17,2674458,1.0,0.0,0.0,0.0,,harer bar&restaurant,London,Unspecified
-2026-07-17,2722948,1.0,0.0,0.0,0.0,,Yared Kurt,Alemayehu,Unspecified
-2026-07-17,2808896,1.0,0.0,0.0,0.0,,Central butchery,Alemayehu,Unspecified
-2026-07-17,2848593,1.0,0.0,0.0,0.0,,Habesha butchery,Alemayehu,Unspecified
-2026-07-17,2934522,1.0,0.0,0.0,0.0,,Megenagna Fiyel Bete,Netsanet,Unspecified
-2026-07-17,2948842,1.0,0.0,0.0,0.0,,Corner  Lounge,Netsanet,Unspecified
-2026-07-17,2956291,1.0,0.0,0.0,0.0,,Tang da hotel,Netsanet,Unspecified
+2026-07-17,2722948,1.0,1.0,1.0,1.0,1.0,Yared Kurt,Alemayehu,Unspecified
+2026-07-17,2766615,0.0,1.0,0.0,,0.0,Fantu supermarket,Netsanet,Unspecified
+2026-07-17,2808896,1.0,1.0,1.0,1.0,1.0,Central butchery,Alemayehu,Unspecified
+2026-07-17,2848593,1.0,1.0,1.0,1.0,1.0,Habesha butchery,Alemayehu,Unspecified
+2026-07-17,2934522,1.0,1.0,1.0,1.0,1.0,Megenagna Fiyel Bete,Netsanet,Unspecified
+2026-07-17,2948842,1.0,1.0,1.0,1.0,1.0,Corner  Lounge,Netsanet,Unspecified
+2026-07-17,2956291,1.0,1.0,1.0,1.0,1.0,Tang da hotel,Netsanet,Unspecified
+2026-07-18,1000770,0.0,1.0,0.0,,0.0,Ramada Hotel,Netsanet,Unspecified
+2026-07-18,1000814,0.0,1.0,0.0,,0.0,2000 Habesha Cultural House,Netsanet,Unspecified
+2026-07-18,1001071,0.0,1.0,0.0,,0.0,Antica Bar and Restaurant,Netsanet,Unspecified
+2026-07-18,1001794,0.0,1.0,0.0,,0.0,Washington Hotel,Netsanet,Unspecified
+2026-07-18,1001845,0.0,1.0,0.0,,0.0,Desalegn Hotel,Netsanet,Unspecified
+2026-07-18,1024272,0.0,1.0,0.0,,0.0,Azzeman Hotel,Netsanet,Unspecified
+2026-07-18,1066889,0.0,1.0,0.0,,0.0,Diamond Hotel,Netsanet,Unspecified
 2026-07-20,1000112,1.0,0.0,0.0,0.0,,Zegelila Restaurant,Alemayehu,Unspecified
 2026-07-20,1001463,1.0,0.0,0.0,0.0,,Grand Mark Addis,Alemayehu,Unspecified
 2026-07-20,1001703,1.0,0.0,0.0,0.0,,Ethiopia Hotel No. 2,Netsanet,Unspecified
