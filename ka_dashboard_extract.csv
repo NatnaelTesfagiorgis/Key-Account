@@ -7567,13 +7567,6 @@ visits,2848593,Habesha butchery,Alemayehu,,Unspecified,,,,2026-07-17,,,,,,,,,,,,
 visits,2934522,Megenagna Fiyel Bete,Netsanet,,Unspecified,,,,2026-07-17,,,,,,,,,,,,,,1.0,1.0,1.0,1.0,1.0,,,,,,
 visits,2948842,Corner  Lounge,Netsanet,,Unspecified,,,,2026-07-17,,,,,,,,,,,,,,1.0,1.0,1.0,1.0,1.0,,,,,,
 visits,2956291,Tang da hotel,Netsanet,,Unspecified,,,,2026-07-17,,,,,,,,,,,,,,1.0,1.0,1.0,1.0,1.0,,,,,,
-visits,1000770,Ramada Hotel,Netsanet,,Unspecified,,,,2026-07-18,,,,,,,,,,,,,,0.0,1.0,0.0,,0.0,,,,,,
-visits,1000814,2000 Habesha Cultural House,Netsanet,,Unspecified,,,,2026-07-18,,,,,,,,,,,,,,0.0,1.0,0.0,,0.0,,,,,,
-visits,1001071,Antica Bar and Restaurant,Netsanet,,Unspecified,,,,2026-07-18,,,,,,,,,,,,,,0.0,1.0,0.0,,0.0,,,,,,
-visits,1001794,Washington Hotel,Netsanet,,Unspecified,,,,2026-07-18,,,,,,,,,,,,,,0.0,1.0,0.0,,0.0,,,,,,
-visits,1001845,Desalegn Hotel,Netsanet,,Unspecified,,,,2026-07-18,,,,,,,,,,,,,,0.0,1.0,0.0,,0.0,,,,,,
-visits,1024272,Azzeman Hotel,Netsanet,,Unspecified,,,,2026-07-18,,,,,,,,,,,,,,0.0,1.0,0.0,,0.0,,,,,,
-visits,1066889,Diamond Hotel,Netsanet,,Unspecified,,,,2026-07-18,,,,,,,,,,,,,,0.0,1.0,0.0,,0.0,,,,,,
 visits,1000112,Zegelila Restaurant,Alemayehu,,Unspecified,,,,2026-07-20,,,,,,,,,,,,,,1.0,0.0,0.0,0.0,,,,,,,
 visits,1001463,Grand Mark Addis,Alemayehu,,Unspecified,,,,2026-07-20,,,,,,,,,,,,,,1.0,0.0,0.0,0.0,,,,,,,
 visits,1001703,Ethiopia Hotel No. 2,Netsanet,,Unspecified,,,,2026-07-20,,,,,,,,,,,,,,1.0,0.0,0.0,0.0,,,,,,,
@@ -8418,7 +8411,7 @@ kpiConfig,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Execution Standard,0.25,False,,
 kpiConfig,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Visit Completion,0.0,False,,
 kpiConfig,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Fridge Productivity,0.0,False,,
 meta,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,sourceFile,C:\Users\Natnael.Tesfagiorgis\OneDrive - Swinkels\Desktop\python\Key Account\Key Accout Report.xlsx
-meta,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,generatedAt,2026-07-20 09:34:52
+meta,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,generatedAt,2026-07-20 09:39:41
 meta,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,lastDataDate,2026-07-20
 meta,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,currentMonthStart,2026-07-01
 meta,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,currentYearStart,2026-01-01
