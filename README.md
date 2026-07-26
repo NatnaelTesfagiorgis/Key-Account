@@ -1,17 +1,19 @@
-# KA Dashboard v24 - Upload Population Fixed
+# KA Dashboard v25 - Draught Displayed in Keg
 
-This package fixes the issue where the uploaded extract was not populating.
+This version keeps the extract and KPI calculations in crate equivalent, but changes the visual display:
 
-Fixes:
-- Streamlit uploader is still at the bottom, but the uploaded file is processed in the same run.
-- Streamlit injects the payload into HTML immediately, without waiting for browser load timing issues.
-- Manual standalone HTML upload no longer depends on PapaParse/CDN; it has a built-in CSV parser.
-- Employee ID mapping extractor is included.
-- Visuals trust the already-correct extract values.
-- SKU and top Outlet filters remain removed.
+- If Category = Draught:
+  - Actual, Target, Daily Target, Run Rate, Variance, and Volume charts are displayed in Keg.
+  - Achievement percentages stay the same because both actual and target are divided by the same keg factor.
+- If Category = Bottle or ALL:
+  - Volumes are displayed in crate equivalent.
 
-Run:
-```powershell
-python build_ka_dashboard_excel_to_single_csv.py
-python -m streamlit run streamlit_app.py
-```
+Keg factor:
+- 1 keg = 30L
+- 1 bottle crate = 24 × 0.33L = 7.92L
+- 1 keg = 30 / 7.92 = 3.787878 crate equivalent
+
+Example for Netsanet / Employee ID 215:
+- Draught MTD actual 1,272.73 crate equivalent displays as 336 kegs.
+- Draught MTD target 1,000 crate equivalent displays as 264 kegs.
+- Achievement remains about 127%.
