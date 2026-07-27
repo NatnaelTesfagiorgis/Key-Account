@@ -117,6 +117,12 @@ function isDraughtScope(s=state()){return normCat(s.category)==="draught";}
 function volumeDisplayFactor(s=state()){return isDraughtScope(s)?KEG_FACTOR:1;}
 function displayVolume(v,s=state()){const n=val(v);return n==null?null:n/volumeDisplayFactor(s);}
 function volumeUnitLabel(s=state()){return isDraughtScope(s)?"Keg":"Crate Eq.";}
+function fridgeCalcState(s=state()){
+  // Fridge Productivity is a bottle/cold-availability KPI.
+  // It should respect Period, KA Manager and Segment,
+  // but it should NOT change when the Category filter is changed.
+  return {...s,category:"Bottle",sku:"ALL"};
+}
 function bool(v){return v===true||["true","yes","y","1"].includes(String(v??"").trim().toLowerCase())}
 function setStatus(msg,kind=""){const e=document.getElementById("status");e.textContent=msg;e.className="status "+kind}
 function parseCell(v){
@@ -255,7 +261,16 @@ function aggregateKPIs(s,period=s.period){
  const actual=sum(sales,"Actual Volume"), target=s.sku==="ALL"?phasedTargetTotal(targets,end):null, volumeAch=target?actual/target:null;
  const planned=sum(visits,"Planned Visits"), actualVisits=sum(visits,"Actual Visits"), jpGood=sum(visits,"JP Good Visits"), visitCompletion=div(actualVisits,planned), jpAdherence=div(jpGood,actualVisits);
  const executionActual=exec.length?exec.reduce((a,r)=>a+(val(r["Execution Actual"])||0),0)/exec.length:null, executionTarget=exec.length?exec.reduce((a,r)=>a+(val(r["Execution Target"])||0),0)/exec.length:(D.kpiTargets["Execution Standard"]||.85), executionAch=div(executionActual,executionTarget);
- const fridgeOutlets=outs.filter(r=>bool(r["Has Fridge"])), fridgeIds=new Set(fridgeOutlets.map(r=>r["Outlet ID"])), fridgeVolume=sales.filter(r=>fridgeIds.has(r["Outlet ID"])).reduce((a,r)=>a+(val(r["Actual Volume"])||0),0), fridgeProductivity=fridgeOutlets.length?fridgeVolume/(fridgeOutlets.length*daysInPeriod(start,end)):null;
+
+ // Fridge productivity intentionally ignores selected Category.
+ // It always uses Bottle sales from fridge outlets, while still respecting Period, KA Manager and Segment.
+ const fridgeS=fridgeCalcState(s);
+ const fridgeOutlets=outs.filter(r=>bool(r["Has Fridge"]));
+ const fridgeIds=new Set(fridgeOutlets.map(r=>r["Outlet ID"]));
+ const fridgeSales=salesRows(fridgeS,start,end).filter(r=>fridgeIds.has(r["Outlet ID"]));
+ const fridgeVolume=fridgeSales.reduce((a,r)=>a+(val(r["Actual Volume"])||0),0);
+ const fridgeProductivity=fridgeOutlets.length?fridgeVolume/(fridgeOutlets.length*daysInPeriod(start,end)):null;
+
  const values={"Volume":cap(volumeAch),"JP Adherence":cap(jpAdherence),"Visit Completion":cap(visitCompletion),"Execution Standard":cap(executionAch),"Fridge Productivity":cap(div(fridgeProductivity,D.kpiTargets["Fridge Productivity"]||1))};
  let weighted=0,weights=0;F.kpiConfig.forEach(r=>{if(!isIncludedFinal(r["Included Final"]))return;const key=kpiName(r.KPI),v=key?values[key]:null,w=kpiWeight(r.Weight);if(v!=null&&Number.isFinite(v)&&w!=null){weighted+=v*w;weights+=w}});
  return {overall:weights?weighted/weights:null,actual,target,volumeAch,planned,actualVisits,visitCompletion,jpAdherence,fridgeProductivity,executionActual,executionTarget,executionAch,activeOutlets:outs.length}
@@ -316,14 +331,38 @@ function volumePerfRow(labels,s){
 }
 function buildManagerRows(){
  const s=state(), managers=unique(selectedOutlets(s),"KA Manager"), totalActual=displayVolume(sum(mtdSales(s),"Actual Volume"),s);
- const rows=managers.map(manager=>{const row=volumePerfRow({"KA Manager":manager},{...s,manager});row["Contri %"]=div(row["MTD Actual"],totalActual);return row});
- if(s.manager==="ALL"&&s.segment==="ALL"&&s.outlet==="ALL"){const total=volumePerfRow({"KA Manager":"Grand Total"},s);total["Contri %"]=1;rows.push(total)}
+ const rows=managers.map(manager=>{const row=volumePerfRow({"KA Manager":manager},{...s,manager});row["Actual Vol Contribution"]=div(row["MTD Actual"],totalActual);return row});
+ if(s.manager==="ALL"&&s.segment==="ALL"&&s.outlet==="ALL"){const total=volumePerfRow({"KA Manager":"Grand Total"},s);total["Actual Vol Contribution"]=1;rows.push(total)}
  return rows
 }
 function buildOutletRows(){const s=state();return selectedOutlets(s).map(o=>volumePerfRow({"KA Manager":o["KA Manager"],"Outlet Name":o["Outlet Name"],"Outlet ID":o["Outlet ID"]},{...s,outlet:o["Outlet ID"]}))}
 function buildZeroRows(){return buildOutletRows().filter(r=>(val(r["MTD Actual"])||0)===0).map(r=>({"KA Manager":r["KA Manager"],"Outlet Name":r["Outlet Name"],"Outlet ID":r["Outlet ID"]}))}
-function buildCharts(){const s=state(),{start,end}=periodBounds(s.period), managers=unique(selectedOutlets(s),"KA Manager");combo("managerVolume",managers.map(m=>{const localState={...s,manager:m};const k=aggregateKPIs(localState,s.period);return {"KA Manager":m,Actual:displayVolume(k.actual,s),Target:displayVolume(k.target,s),Achievement:k.volumeAch}}),"KA Manager","Actual","Target","Achievement");combo("managerVisits",managers.map(m=>{const rows=visitRows({...s,manager:m},start,end),planned=sum(rows,"Planned Visits"),actual=sum(rows,"Actual Visits");return {"KA Manager":m,Planned:planned,Actual:actual,Achievement:div(actual,planned)}}),"KA Manager","Actual","Planned","Achievement");combo("managerExecution",managers.map(m=>{const exec=latestExecByOutlet(executionRows({...s,manager:m},start,end));const actual=exec.length?exec.reduce((a,r)=>a+(val(r["Execution Actual"])||0),0)/exec.length:null,target=exec.length?exec.reduce((a,r)=>a+(val(r["Execution Target"])||0),0)/exec.length:null;return {"KA Manager":m,Actual:actual,Target:target,Achievement:div(actual,target)}}),"KA Manager","Actual","Target","Achievement");combo("managerFridge",managers.map(m=>{const k=aggregateKPIs({...s,manager:m},s.period),t=D.kpiTargets["Fridge Productivity"]||1;return {"KA Manager":m,Actual:k.fridgeProductivity,Target:t,Achievement:div(k.fridgeProductivity,t)}}),"KA Manager","Actual","Target","Achievement");const outs=selectedOutlets(s).filter(r=>bool(r["Has Fridge"])),ids=new Set(outs.map(r=>r["Outlet ID"])),sales=salesRows(s,start,end).filter(r=>ids.has(r["Outlet ID"])),vol=new Map();sales.forEach(r=>vol.set(r["Outlet ID"],(vol.get(r["Outlet ID"])||0)+(val(r["Actual Volume"])||0)));const days=daysInPeriod(start,end),counts={Productive:0,Underproductive:0,Inactive:0};outs.forEach(o=>{const p=(vol.get(o["Outlet ID"])||0)/days;if(p>=1)counts.Productive++;else if(p>0)counts.Underproductive++;else counts.Inactive++});doughnut("fridgeBreakdown",["Productive","Underproductive","Inactive"],[counts.Productive,counts.Underproductive,counts.Inactive]);const k=aggregateKPIs(s,s.period);combo("volumeSummary",[{Metric:"Volume",Actual:k.actual,Target:k.target,Achievement:k.volumeAch}],"Metric","Actual","Target","Achievement")}
-const managerCols=[["KA Manager","KA Manager","t"],["Contri %","Contri %","p"],["Monthly Target","Month Target","n"],["MTD Target","Period Target","n"],["MTD Actual","Actual","n"],["% MTD Target Achieved","Period Ach %","p"],["% Monthly Target Achieved","Month Ach %","p"],["Daily Target","Daily Tgt","n1"],["Actual Run rate","Actual RR","n1"],["Daily Target - Actual RR","Daily Var.","dailyVar"],["Expected Daily required Run rate","Req. RR","n1"],["Variance Monthly (Actual Vs Target)","Month Var.","n"],["Closing RR (Cadence)","Closing RR","cadence"]];
+function buildCharts(){
+ const s=state(),{start,end}=periodBounds(s.period),managers=unique(selectedOutlets(s),"KA Manager");
+
+ combo("managerVolume",managers.map(m=>{const localState={...s,manager:m};const k=aggregateKPIs(localState,s.period);return {"KA Manager":m,Actual:displayVolume(k.actual,s),Target:displayVolume(k.target,s),Achievement:k.volumeAch}}),"KA Manager","Actual","Target","Achievement");
+
+ combo("managerVisits",managers.map(m=>{const rows=visitRows({...s,manager:m},start,end),planned=sum(rows,"Planned Visits"),actual=sum(rows,"Actual Visits");return {"KA Manager":m,Planned:planned,Actual:actual,Achievement:div(actual,planned)}}),"KA Manager","Actual","Planned","Achievement");
+
+ combo("managerExecution",managers.map(m=>{const exec=latestExecByOutlet(executionRows({...s,manager:m},start,end));const actual=exec.length?exec.reduce((a,r)=>a+(val(r["Execution Actual"])||0),0)/exec.length:null,target=exec.length?exec.reduce((a,r)=>a+(val(r["Execution Target"])||0),0)/exec.length:null;return {"KA Manager":m,Actual:actual,Target:target,Achievement:div(actual,target)}}),"KA Manager","Actual","Target","Achievement");
+
+ // Fridge charts also ignore selected Category and always use Bottle sales.
+ combo("managerFridge",managers.map(m=>{const k=aggregateKPIs({...s,manager:m},s.period),t=D.kpiTargets["Fridge Productivity"]||1;return {"KA Manager":m,Actual:k.fridgeProductivity,Target:t,Achievement:div(k.fridgeProductivity,t)}}),"KA Manager","Actual","Target","Achievement");
+
+ const fridgeS=fridgeCalcState(s);
+ const outs=selectedOutlets(s).filter(r=>bool(r["Has Fridge"]));
+ const ids=new Set(outs.map(r=>r["Outlet ID"]));
+ const sales=salesRows(fridgeS,start,end).filter(r=>ids.has(r["Outlet ID"]));
+ const vol=new Map();
+ sales.forEach(r=>vol.set(r["Outlet ID"],(vol.get(r["Outlet ID"])||0)+(val(r["Actual Volume"])||0)));
+ const days=daysInPeriod(start,end),counts={Productive:0,Underproductive:0,Inactive:0};
+ outs.forEach(o=>{const p=(vol.get(o["Outlet ID"])||0)/days;if(p>=1)counts.Productive++;else if(p>0)counts.Underproductive++;else counts.Inactive++});
+ doughnut("fridgeBreakdown",["Productive","Underproductive","Inactive"],[counts.Productive,counts.Underproductive,counts.Inactive]);
+
+ const k=aggregateKPIs(s,s.period);
+ combo("volumeSummary",[{Metric:"Volume",Actual:displayVolume(k.actual,s),Target:displayVolume(k.target,s),Achievement:k.volumeAch}],"Metric","Actual","Target","Achievement")
+}
+const managerCols=[["KA Manager","KA Manager","t"],["Actual Vol Contribution","Actual Vol Contribution","p"],["Monthly Target","Month Target","n"],["MTD Target","Period Target","n"],["MTD Actual","Actual","n"],["% MTD Target Achieved","Period Ach %","p"],["% Monthly Target Achieved","Month Ach %","p"],["Daily Target","Daily Tgt","n1"],["Actual Run rate","Actual RR","n1"],["Daily Target - Actual RR","Daily Var.","dailyVar"],["Expected Daily required Run rate","Req. RR","n1"],["Variance Monthly (Actual Vs Target)","Month Var.","n"],["Closing RR (Cadence)","Closing RR","cadence"]];
 const outletCols=[["KA Manager","KA Manager","t"],["Outlet Name","Outlet","t"],["Outlet ID","Outlet ID","t"],["Monthly Target","Month Target","n"],["MTD Target","Period Target","n"],["MTD Actual","Actual","n"],["% MTD Target Achieved","Period Ach %","p"],["% Monthly Target Achieved","Month Ach %","p"],["Daily Target","Daily Tgt","n1"],["Actual Run rate","Actual RR","n1"],["Daily Target - Actual RR","Daily Var.","dailyVar"],["Expected Daily required Run rate","Req. RR","n1"],["Variance Monthly (Actual Vs Target)","Month Var.","n"],["Closing RR (Cadence)","Closing RR","cadence"]];
 const zeroCols=[["KA Manager","KA Manager","t"],["Outlet Name","Outlet","t"],["Outlet ID","Outlet ID","t"]];
 function cell(v,t){if(t==="cadence"){const c=v==null||!Number.isFinite(Number(v))?"bad":(Number(v)>=1?"good":(Number(v)>=.9?"watch":"bad"));return `<span class="pill ${c}">${pct(v)}</span>`}if(t==="dailyVar")return num(v,1);if(t==="p")return pct(v);if(t==="n")return num(v,0);if(t==="n1")return num(v,1);return v??"—"}
@@ -364,7 +403,7 @@ function ensureActiveMonthNotInPeriod(){
   if(e.value===activeMonthValue)e.value="MTD";
 }
 
-function init(payload){D=payload;F=D.facts;LAST=new Date(D.meta.lastDataDate+"T00:00:00");MONTH_START=new Date(LAST.getFullYear(),LAST.getMonth(),1);YEAR_START=new Date(LAST.getFullYear(),0,1);fillPeriodOptions();ensureActiveMonthNotInPeriod();fill("manager",unique(F.outlets,"KA Manager"));fill("segment",unique(F.outlets,"Segment"));fill("category",[...new Set([...unique(F.sales,"Category"),...unique(F.targets,"Category")])].sort());document.getElementById("loader").style.display="none";document.getElementById("page").style.display="block";document.getElementById("footer").textContent=`Generated from single CSV extract • Last data date ${D.meta.lastDataDate||""} • Draught shown in Keg, others in Crate Eq.`;renderAll()}
+function init(payload){D=payload;F=D.facts;LAST=new Date(D.meta.lastDataDate+"T00:00:00");MONTH_START=new Date(LAST.getFullYear(),LAST.getMonth(),1);YEAR_START=new Date(LAST.getFullYear(),0,1);fillPeriodOptions();ensureActiveMonthNotInPeriod();fill("manager",unique(F.outlets,"KA Manager"));fill("segment",unique(F.outlets,"Segment"));fill("category",[...new Set([...unique(F.sales,"Category"),...unique(F.targets,"Category")])].sort());document.getElementById("loader").style.display="none";document.getElementById("page").style.display="block";document.getElementById("footer").textContent=`Generated from single CSV extract • Last data date ${D.meta.lastDataDate||""} • Draught shown in Keg, others in Crate Eq. • Fridge Productivity fixed to Bottle sales`;renderAll()}
 document.getElementById("clear").onclick=()=>{["manager","segment","category"].forEach(id=>document.getElementById(id).value="ALL");document.getElementById("period").value="MTD";const ots=document.getElementById("outletTableSelector");if(ots)ots.value="ALL";renderAll()};
 ["period","category"].forEach(id=>document.getElementById(id).onchange=renderAll);
 ["manager","segment"].forEach(id=>document.getElementById(id).onchange=()=>{const ots=document.getElementById("outletTableSelector");if(ots)ots.value="ALL";renderAll()});document.getElementById("outletTableSelector").onchange=renderTables;

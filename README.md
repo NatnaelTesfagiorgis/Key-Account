@@ -1,19 +1,13 @@
-# KA Dashboard v25 - Draught Displayed in Keg
+# KA Dashboard v27 - Actual Vol Contribution Rename
 
-This version keeps the extract and KPI calculations in crate equivalent, but changes the visual display:
+Change made:
+- The first table column previously named `Contri %` is now renamed to `Actual Vol Contribution`.
 
-- If Category = Draught:
-  - Actual, Target, Daily Target, Run Rate, Variance, and Volume charts are displayed in Keg.
-  - Achievement percentages stay the same because both actual and target are divided by the same keg factor.
-- If Category = Bottle or ALL:
-  - Volumes are displayed in crate equivalent.
+Meaning:
+- Actual Vol Contribution = KA Manager Actual Volume / Total Actual Volume for the selected filters.
 
-Keg factor:
-- 1 keg = 30L
-- 1 bottle crate = 24 × 0.33L = 7.92L
-- 1 keg = 30 / 7.92 = 3.787878 crate equivalent
-
-Example for Netsanet / Employee ID 215:
-- Draught MTD actual 1,272.73 crate equivalent displays as 336 kegs.
-- Draught MTD target 1,000 crate equivalent displays as 264 kegs.
-- Achievement remains about 127%.
+All v26 logic is preserved:
+- Fridge Productivity ignores Category and always uses Bottle sales.
+- Draught is displayed in Keg when Category = Draught.
+- Bottle and ALL remain in crate equivalent.
+- Employee ID mapping remains active.
