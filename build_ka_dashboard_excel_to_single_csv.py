@@ -41,6 +41,7 @@ BASE_FOLDER = Path(
 )
 INPUT_FILE = BASE_FOLDER / "Key Accout Report.xlsx"
 OUTPUT_FOLDER = BASE_FOLDER / "dashboard_data"
+CSV_OUTPUT_FOLDER = BASE_FOLDER / "dashboard_csv"
 
 OUTPUT_JSON = OUTPUT_FOLDER / "ka_dashboard_data.json"
 OUTPUT_OUTLET_CSV = OUTPUT_FOLDER / "outlet_performance.csv"
@@ -61,6 +62,44 @@ DEFAULT_KPI_TARGETS = {
     "Fridge Productivity": 1.00,  # crates per calendar day
     "Execution Standard": 0.85,
 }
+
+# =========================================================
+# HARDCODED VOLUME CONVERSION TO CRATE EQUIVALENT
+# =========================================================
+# Standard bottle crate = 24 bottles x 0.33L = 7.92L.
+# Standard keg = 30L.
+# Therefore:
+#   1 keg = 30 / 7.92 = 3.787878... crate equivalent
+#
+# The dashboard will use "Actual Volume" as crate equivalent.
+# The original unconverted sales quantity is kept as "Raw Actual Volume".
+BOTTLE_CRATE_LITERS = 24 * 0.33
+KEG_LITERS = 30
+KEG_TO_CRATE_EQUIVALENT = KEG_LITERS / BOTTLE_CRATE_LITERS
+
+
+def crate_equivalent_factor(sku: str, category: str) -> float:
+    """Return hardcoded conversion factor from source quantity to crate equivalent."""
+    sku_text = str(sku or "").strip().lower()
+    category_text = str(category or "").strip().lower()
+
+    # Keg / draught products are treated as 30L keg units.
+    if "keg" in sku_text or "draught" in sku_text or "draft" in sku_text:
+        return KEG_TO_CRATE_EQUIVALENT
+
+    if category_text in {"draught", "draft"}:
+        return KEG_TO_CRATE_EQUIVALENT
+
+    # Bottle products are already reported as crate quantity.
+    return 1.0
+
+
+def target_crate_equivalent_factor(category: str) -> float:
+    """Return hardcoded target conversion factor from Sales_Target Category to crate equivalent."""
+    category_text = str(category or "").strip().lower()
+    if category_text in {"draught", "draft"}:
+        return KEG_TO_CRATE_EQUIVALENT
+    return 1.0
 
 
 # =========================================================
@@ -356,6 +395,106 @@ def prepare_outlet_master(excel: pd.ExcelFile) -> pd.DataFrame:
     return prepared
 
 
+
+def build_employee_owner_dim(outlet: pd.DataFrame) -> pd.DataFrame:
+    """
+    Builds the official employee-to-KA-manager ownership map.
+
+    Option 2 rule:
+        Employee ID is the ownership key.
+
+    If the same Employee ID appears under more than one KA Manager in Outlet_Master,
+    the most frequent KA Manager is used. This prevents a few stale outlet-owner rows
+    from moving targets to the wrong manager.
+    """
+    if "Employee ID" not in outlet.columns:
+        return pd.DataFrame(columns=["Employee ID", "Employee KA Manager"])
+
+    base = outlet[
+        outlet["Employee ID"].notna()
+        & outlet["Employee ID"].astype(str).str.strip().ne("")
+        & outlet["KA Manager"].notna()
+        & outlet["KA Manager"].astype(str).str.strip().ne("")
+    ].copy()
+
+    if base.empty:
+        return pd.DataFrame(columns=["Employee ID", "Employee KA Manager"])
+
+    counts = (
+        base.groupby(["Employee ID", "KA Manager"], as_index=False)
+        .size()
+        .rename(columns={"size": "Owner Count"})
+        .sort_values(["Employee ID", "Owner Count", "KA Manager"], ascending=[True, False, True])
+    )
+
+    owner = (
+        counts.drop_duplicates("Employee ID", keep="first")
+        .rename(columns={"KA Manager": "Employee KA Manager"})
+        [["Employee ID", "Employee KA Manager"]]
+    )
+
+    return owner
+
+
+def apply_employee_owner_to_outlets(
+    outlet: pd.DataFrame,
+    employee_owner_dim: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Applies Employee ID ownership to outlet-level dimensions.
+
+    This makes actual sales, visits and execution follow the same owner rule as targets.
+    """
+    if employee_owner_dim.empty or "Employee ID" not in outlet.columns:
+        return outlet
+
+    result = outlet.merge(
+        employee_owner_dim,
+        on="Employee ID",
+        how="left",
+    )
+
+    result["Source KA Manager"] = result["KA Manager"]
+    result["KA Manager"] = result["Employee KA Manager"].fillna(result["KA Manager"])
+    result = result.drop(columns=["Employee KA Manager"], errors="ignore")
+    return result
+
+
+def apply_employee_owner_to_targets(
+    target: pd.DataFrame,
+    employee_owner_dim: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Applies Employee ID ownership to Sales_Target.
+
+    Target rows are assigned to KA Manager by Sales_Target Employee ID, not by
+    the target Outlet ID. Outlet ID is still kept for outlet-level detail, but it
+    no longer controls target ownership.
+    """
+    result = target.copy()
+
+    result["Source Employee ID"] = result.get("Employee ID")
+
+    if employee_owner_dim.empty or "Employee ID" not in result.columns:
+        result["KA Manager"] = "Unassigned"
+        result["Target Owner Mapping"] = "No Employee ID owner map"
+        return result
+
+    result = result.merge(
+        employee_owner_dim,
+        on="Employee ID",
+        how="left",
+    )
+
+    result["KA Manager"] = result["Employee KA Manager"].fillna("Unassigned")
+    result["Target Owner Mapping"] = np.where(
+        result["Employee KA Manager"].notna(),
+        "Employee ID",
+        "Unassigned Employee ID",
+    )
+    result = result.drop(columns=["Employee KA Manager"], errors="ignore")
+    return result
+
 def prepare_calendar(excel: pd.ExcelFile) -> pd.DataFrame:
     calendar = read_sheet(excel, ["Calander_MDM", "Calendar_MDM", "Calendar"])
 
@@ -474,6 +613,18 @@ def prepare_actual_sales(
     # They will not connect correctly to Bottle/Draught target until added to Product_MDM.
     prepared["Category"] = prepared["Category"].fillna("Unmapped")
 
+    # Convert all actual sales to crate equivalent in code.
+    # Bottle/crate products stay as-is.
+    # Keg/draught products are converted using 1 x 30L keg = 30 / 7.92 = 3.787878 crate equivalent.
+    prepared["Raw Actual Volume"] = prepared["Actual Volume"]
+    prepared["Crate Equivalent Factor"] = [
+        crate_equivalent_factor(sku, category)
+        for sku, category in zip(prepared["SKU"], prepared["Category"])
+    ]
+    prepared["Actual Volume"] = (
+        prepared["Raw Actual Volume"] * prepared["Crate Equivalent Factor"]
+    )
+
     return prepared.drop(columns=["SKU Key"]), unmatched_product_count
 
 def prepare_sales_target(
@@ -487,7 +638,7 @@ def prepare_sales_target(
     first column. The month of Date determines which month each target belongs
     to, so MTD, YTD and closed-month calculations use the correct target period.
     """
-    target = read_sheet(excel, ["Sales_Target"])
+    target = read_sheet(excel, ["Sales_Target", "Sales_Targett", "Sales Target"])
 
     date_col = require_column(target, ["Date"], "Sales_Target")
     outlet_col = require_column(target, ["Outlet ID"], "Sales_Target")
@@ -572,6 +723,18 @@ def prepare_sales_target(
     prepared["Category"] = prepared["Category"].replace(
         "",
         "Unspecified",
+    )
+
+    # Convert Sales_Target to crate equivalent in code.
+    # Bottle category targets are already entered as crate quantity.
+    # Draught category targets are entered as keg count and converted:
+    # 1 x 30L keg = 30 / 7.92 = 3.787878 crate equivalent.
+    prepared["Raw Full Month Target"] = prepared["Full Month Target"]
+    prepared["Target Crate Equivalent Factor"] = prepared["Category"].apply(
+        target_crate_equivalent_factor
+    )
+    prepared["Full Month Target"] = (
+        prepared["Raw Full Month Target"] * prepared["Target Crate Equivalent Factor"]
     )
 
     # Date is now mandatory, so the fallback is no longer used.
@@ -910,14 +1073,86 @@ def create_period_outlet_metrics(
     return result
 
 
-def build_dashboard_extract() -> dict[str, Any]:
-    if not INPUT_FILE.exists():
-        raise FileNotFoundError(
-            f"Input workbook was not found:\n{INPUT_FILE}"
+def resolve_input_workbook() -> Path:
+    """
+    Find the Excel workbook dynamically.
+
+    This prevents the script from depending only on the old hard-coded path:
+    C:\\Users\\Natnael.Tesfagiorgis\\OneDrive - Swinkels\\Desktop\\python\\Key Account\\Key Accout Report.xlsx
+
+    Priority:
+    1. INPUT_FILE if it exists
+    2. Excel file beside this Python script
+    3. Excel file in the current working directory / notebook folder
+    4. Any nearby .xlsx file that contains the required Outlet_Master_File sheet
+    """
+    candidates: list[Path] = []
+
+    # Original hard-coded path, if valid on this machine
+    candidates.append(INPUT_FILE)
+
+    # Same folder as this Python file
+    try:
+        script_folder = Path(__file__).resolve().parent
+        candidates.extend(
+            [
+                script_folder / "Key Accout Report.xlsx",
+                script_folder / "Key Account Report.xlsx",
+            ]
         )
+        candidates.extend(script_folder.glob("*.xlsx"))
+    except NameError:
+        pass
+
+    # Current working directory, useful when running from Jupyter / interactive cells
+    cwd = Path.cwd()
+    candidates.extend(
+        [
+            cwd / "Key Accout Report.xlsx",
+            cwd / "Key Account Report.xlsx",
+        ]
+    )
+    candidates.extend(cwd.glob("*.xlsx"))
+
+    checked: list[str] = []
+    seen: set[str] = set()
+
+    for candidate in candidates:
+        key = str(candidate).lower()
+        if key in seen or candidate.name.startswith("~$"):
+            continue
+        seen.add(key)
+
+        if not candidate.exists():
+            checked.append(f"{candidate} -> not found")
+            continue
+
+        try:
+            xls = pd.ExcelFile(candidate, engine="openpyxl")
+            sheets = set(xls.sheet_names)
+        except Exception as exc:
+            checked.append(f"{candidate} -> could not read: {exc}")
+            continue
+
+        # Correct KA workbook must have outlet master sheet.
+        if sheets.intersection({"Outlet_Master_File", "Outlet_Master", "Outlet_Master v1"}):
+            return candidate
+
+        checked.append(f"{candidate} -> wrong workbook; sheets: {list(sheets)[:10]}")
+
+    raise FileNotFoundError(
+        "Could not find the correct KA Excel workbook.\n\n"
+        "Put the full KA workbook in the same folder as this Python file and name it:\n"
+        "Key Accout Report.xlsx\n\n"
+        "The workbook must contain the Outlet_Master_File sheet.\n\n"
+        "Checked:\n" + "\n".join(checked[:30])
+    )
+
+def build_dashboard_extract() -> dict[str, Any]:
+    input_file = resolve_input_workbook()
 
     OUTPUT_FOLDER.mkdir(parents=True, exist_ok=True)
-    excel = pd.ExcelFile(INPUT_FILE, engine="openpyxl")
+    excel = pd.ExcelFile(input_file, engine="openpyxl")
 
     outlet = prepare_outlet_master(excel)
     calendar = prepare_calendar(excel)
@@ -933,6 +1168,15 @@ def build_dashboard_extract() -> dict[str, Any]:
     current_month_end = current_month_start + pd.offsets.MonthEnd(0)
 
     target, target_fallback_used = prepare_sales_target(excel, latest_date)
+
+    # OPTION 2 OWNERSHIP RULE:
+    # Employee ID controls target ownership and outlet ownership.
+    # This prevents target rows from being assigned to the wrong KA Manager
+    # because of stale/different Outlet ID ownership.
+    employee_owner_dim = build_employee_owner_dim(outlet)
+    outlet = apply_employee_owner_to_outlets(outlet, employee_owner_dim)
+    target = apply_employee_owner_to_targets(target, employee_owner_dim)
+
     visit_plan = prepare_visit_plan(excel)
     visit_actual = prepare_visit_actual(excel)
     kpi_config, kpi_targets = prepare_kpi_config(excel)
@@ -1512,6 +1756,7 @@ def build_dashboard_extract() -> dict[str, Any]:
             "Outlet ID",
             "Outlet Name",
             "KA Manager",
+            "Employee ID",
             "Segment",
             "Is Active",
             "Has Fridge",
@@ -1526,11 +1771,12 @@ def build_dashboard_extract() -> dict[str, Any]:
 
     target_fact = target.merge(
         outlet_filter_dim[
-            ["Outlet ID", "Outlet Name", "KA Manager", "Segment"]
+            ["Outlet ID", "Outlet Name", "Segment"]
         ],
         on="Outlet ID",
         how="left",
     )
+    target_fact["KA Manager"] = target_fact["KA Manager"].fillna("Unassigned")
 
     visit_fact = visit_detail.copy()
     if "Outlet Name" not in visit_fact.columns:
@@ -1585,7 +1831,20 @@ def build_dashboard_extract() -> dict[str, Any]:
             "unmatchedProductRows": unmatched_product_count,
             "productCategoryBasis": (
                 "Actual_Sales Product is mapped through Product_MDM to "
-                "Bottle/Draught Category, then compared with Sales_Target Category"
+                "Bottle/Draught Category. Actual Volume is converted in code to "
+                "crate equivalent before dashboard calculations."
+            ),
+            "crateEquivalentBasis": (
+                "Bottle/crate products = 1.0. Keg/draught products = 30L keg / "
+                "7.92L bottle crate = 3.787878 crate equivalent."
+            ),
+            "targetUnitBasis": (
+                "Sales_Target Bottle category is treated as crate. Sales_Target Draught category "
+                "is treated as keg count and converted to crate equivalent."
+            ),
+            "ownerMappingBasis": (
+                "Option 2 active: Employee ID is the ownership key. Targets are mapped to KA Manager "
+                "through Sales_Target Employee ID, not target Outlet ID."
             ),
         },
         "filters": filters,
@@ -1646,5 +1905,175 @@ def build_dashboard_extract() -> dict[str, Any]:
     return payload
 
 
+
+# =========================================================
+# DIRECT EXCEL TO CSV EXPORT
+# =========================================================
+def _records_to_csv(records, output_file: Path) -> None:
+    df = pd.DataFrame(records)
+    df.to_csv(output_file, index=False, encoding="utf-8-sig")
+
+
+def _dict_to_csv(data: dict, output_file: Path) -> None:
+    rows = [{"Key": key, "Value": value} for key, value in data.items()]
+    pd.DataFrame(rows).to_csv(output_file, index=False, encoding="utf-8-sig")
+
+
+def export_dashboard_csv() -> Path:
+    """
+    Direct workflow:
+        Excel workbook
+            -> this Python file
+            -> dashboard_csv/*.csv
+            -> HTML / Streamlit
+
+    This does NOT need a second data-builder file.
+    """
+    CSV_OUTPUT_FOLDER.mkdir(parents=True, exist_ok=True)
+
+    payload = build_dashboard_extract()
+
+    facts = payload.get("facts", {})
+    meta = payload.get("meta", {})
+    filters = payload.get("filters", {})
+    kpi_targets = payload.get("kpiTargets", {})
+
+    required_facts = [
+        "outlets",
+        "sales",
+        "targets",
+        "visits",
+        "execution",
+        "calendar",
+        "kpiConfig",
+    ]
+
+    missing = [name for name in required_facts if name not in facts]
+    if missing:
+        raise KeyError(
+            "Missing required fact tables in build_dashboard_extract output: "
+            f"{missing}"
+        )
+
+    _records_to_csv(facts["outlets"], CSV_OUTPUT_FOLDER / "outlets.csv")
+    _records_to_csv(facts["sales"], CSV_OUTPUT_FOLDER / "sales.csv")
+    _records_to_csv(facts["targets"], CSV_OUTPUT_FOLDER / "targets.csv")
+    _records_to_csv(facts["visits"], CSV_OUTPUT_FOLDER / "visits.csv")
+    _records_to_csv(facts["execution"], CSV_OUTPUT_FOLDER / "execution.csv")
+    _records_to_csv(facts["calendar"], CSV_OUTPUT_FOLDER / "calendar.csv")
+    _records_to_csv(facts["kpiConfig"], CSV_OUTPUT_FOLDER / "kpi_config.csv")
+
+    _dict_to_csv(meta, CSV_OUTPUT_FOLDER / "meta.csv")
+    _dict_to_csv(kpi_targets, CSV_OUTPUT_FOLDER / "kpi_targets.csv")
+
+    # Optional filter files, useful for checking the extract.
+    for filter_name, values in filters.items():
+        if isinstance(values, list):
+            if values and isinstance(values[0], dict):
+                pd.DataFrame(values).to_csv(
+                    CSV_OUTPUT_FOLDER / f"filter_{filter_name}.csv",
+                    index=False,
+                    encoding="utf-8-sig",
+                )
+            else:
+                pd.DataFrame({"Value": values}).to_csv(
+                    CSV_OUTPUT_FOLDER / f"filter_{filter_name}.csv",
+                    index=False,
+                    encoding="utf-8-sig",
+                )
+
+    print("CSV DASHBOARD EXTRACT CREATED")
+    print(f"Excel source: {resolve_input_workbook()}")
+    print(f"Output folder: {CSV_OUTPUT_FOLDER}")
+    return CSV_OUTPUT_FOLDER
+
+
+
+# =========================================================
+# DIRECT EXCEL TO SINGLE CSV EXPORT
+# =========================================================
+SINGLE_CSV_OUTPUT = BASE_FOLDER / "ka_dashboard_extract.csv"
+
+
+def _clean_records_for_single_csv(records: list[dict], table_name: str) -> pd.DataFrame:
+    """Convert one logical table to rows in the single CSV.
+
+    If a table has no rows, we still write one placeholder row with __empty__=1.
+    This prevents the HTML/Streamlit loader from thinking the table is missing.
+    """
+    if not records:
+        return pd.DataFrame([{"__table__": table_name, "__empty__": 1}])
+
+    df = pd.DataFrame(records)
+    df.insert(0, "__table__", table_name)
+    df["__empty__"] = ""
+    return df
+
+
+def _dict_for_single_csv(data: dict, table_name: str) -> pd.DataFrame:
+    rows = [
+        {"__table__": table_name, "__empty__": "", "Key": key, "Value": value}
+        for key, value in data.items()
+    ]
+    return pd.DataFrame(rows)
+
+
+def export_dashboard_single_csv(output_file: Path | str | None = None) -> Path:
+    """
+    Direct workflow:
+        Key Accout Report.xlsx
+            -> this Python file
+            -> ka_dashboard_extract.csv
+            -> HTML / Streamlit
+
+    One CSV file is easier to share and easier to ingest in HTML.
+    """
+    output_path = Path(output_file) if output_file else SINGLE_CSV_OUTPUT
+
+    payload = build_dashboard_extract()
+
+    facts = payload.get("facts", {})
+    meta = payload.get("meta", {})
+    kpi_targets = payload.get("kpiTargets", {})
+
+    required_facts = [
+        "outlets",
+        "sales",
+        "targets",
+        "visits",
+        "execution",
+        "calendar",
+        "kpiConfig",
+    ]
+
+    missing = [name for name in required_facts if name not in facts]
+    if missing:
+        raise KeyError(
+            "Missing required fact tables in build_dashboard_extract output: "
+            f"{missing}"
+        )
+
+    frames = [
+        _clean_records_for_single_csv(facts["outlets"], "outlets"),
+        _clean_records_for_single_csv(facts["sales"], "sales"),
+        _clean_records_for_single_csv(facts["targets"], "targets"),
+        _clean_records_for_single_csv(facts["visits"], "visits"),
+        _clean_records_for_single_csv(facts["execution"], "execution"),
+        _clean_records_for_single_csv(facts["calendar"], "calendar"),
+        _clean_records_for_single_csv(facts["kpiConfig"], "kpiConfig"),
+        _dict_for_single_csv(meta, "meta"),
+        _dict_for_single_csv(kpi_targets, "kpiTargets"),
+    ]
+
+    combined = pd.concat(frames, ignore_index=True, sort=False)
+    combined = combined.replace([float("inf"), float("-inf")], pd.NA)
+    combined.to_csv(output_path, index=False, encoding="utf-8-sig")
+
+    print("SINGLE CSV DASHBOARD EXTRACT CREATED")
+    print(f"Excel source: {resolve_input_workbook()}")
+    print(f"Output file: {output_path}")
+    return output_path
+
+
 if __name__ == "__main__":
-    build_dashboard_extract()
+    export_dashboard_single_csv()
