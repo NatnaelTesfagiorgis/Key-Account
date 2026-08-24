@@ -403,6 +403,153 @@ select,button,.btn{font-family:var(--font-body)!important;}
   }
 }
 
+
+/* v34 layout: no separate volume summary card */
+.grid4{grid-template-columns:1.25fr 1fr 1fr!important;}
+@media(max-width:1200px){.grid4{grid-template-columns:1fr!important;}}
+
+
+/* =========================================================
+   v35 Active card fit fix
+   Keeps Daily Drop Size inside the Active Outlets card
+   ========================================================= */
+.active-card{
+  overflow:hidden!important;
+}
+.active-card .card-sub{
+  overflow:hidden!important;
+}
+.active-mini-grid{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:7px!important;
+  margin-top:8px!important;
+}
+.active-mini-grid span{
+  min-width:0!important;
+  padding:7px 8px!important;
+  border-radius:10px!important;
+  overflow:hidden!important;
+}
+.active-mini-grid b{
+  display:block!important;
+  font-size:8.2px!important;
+  line-height:1.05!important;
+  letter-spacing:.045em!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.active-mini-grid strong{
+  display:block!important;
+  margin-top:3px!important;
+  font-size:14px!important;
+  line-height:1.05!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.active-mini-grid span:last-child strong{
+  font-size:12px!important;
+  letter-spacing:-.35px!important;
+}
+@media(max-width:1300px){
+  .active-mini-grid{
+    gap:6px!important;
+  }
+  .active-mini-grid span{
+    padding:6px 7px!important;
+  }
+  .active-mini-grid strong{
+    font-size:13px!important;
+  }
+  .active-mini-grid span:last-child strong{
+    font-size:11px!important;
+  }
+}
+@media(max-width:620px){
+  .active-mini-grid{
+    grid-template-columns:1fr 1fr!important;
+  }
+  .active-mini-grid span:last-child strong{
+    font-size:12px!important;
+  }
+}
+
+
+/* =========================================================
+   v40: Total as separate visual next to manager volume
+   ========================================================= */
+.first-diagnostics-grid{
+  display:grid!important;
+  grid-template-columns:1.35fr .82fr 1.15fr 1.15fr!important;
+  gap:12px!important;
+  margin-top:12px!important;
+}
+.total-volume-panel .chart{
+  height:265px!important;
+}
+.total-volume-panel h2{
+  color:#102341!important;
+}
+@media(max-width:1500px){
+  .first-diagnostics-grid{
+    grid-template-columns:1fr 1fr!important;
+  }
+}
+@media(max-width:760px){
+  .first-diagnostics-grid{
+    grid-template-columns:1fr!important;
+  }
+}
+
+
+/* v42: Slimmer Total Volume bars */
+.total-volume-panel .chart{
+  max-width:82%!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+@media(max-width:1500px){
+  .total-volume-panel .chart{
+    max-width:100%!important;
+  }
+}
+
+
+/* v43: More breathing room for total chart + tighter volume card copy */
+.total-volume-panel{
+  padding:18px 20px 22px 20px!important;
+}
+.total-volume-panel .chart{
+  height:290px!important;
+  max-width:74%!important;
+  margin:10px auto 0 auto!important;
+}
+.total-volume-panel canvas{
+  margin-top:6px!important;
+}
+
+.card-volume .card-sub{
+  font-size:10.5px!important;
+  line-height:1.28!important;
+}
+.card-volume .card-sub .muted-mini{
+  font-size:10px!important;
+  color:#7b6d54!important;
+}
+@media(max-width:1500px){
+  .total-volume-panel .chart{
+    max-width:88%!important;
+  }
+}
+@media(max-width:900px){
+  .total-volume-panel .chart{
+    max-width:100%!important;
+    height:260px!important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -432,8 +579,9 @@ select,button,.btn{font-family:var(--font-body)!important;}
 </section>
 <section id="cards" class="cards"></section>
 <div class="zone-title"><div><span>Performance diagnostics</span><small>Targets, actuals and achievement by KA manager</small></div></div>
-<section class="grid3">
-  <article class="panel"><h2>Volume vs Target by KA Manager</h2><div class="chart"><canvas id="managerVolume"></canvas></div></article>
+<section class="grid4 first-diagnostics-grid">
+  <article class="panel volume-panel"><h2>Volume vs Target by KA Manager</h2><div class="chart"><canvas id="managerVolume"></canvas></div></article>
+<article class="panel total-volume-panel"><h2>Total Volume vs Target</h2><div class="chart"><canvas id="totalVolume"></canvas></div></article>
   <article class="panel"><h2>Visit Completion by KA Manager</h2><div class="chart"><canvas id="managerVisits"></canvas></div></article>
   <article class="panel"><h2>Execution by KA Manager</h2><div class="chart"><canvas id="managerExecution"></canvas></div></article>
 </section>
@@ -442,7 +590,6 @@ select,button,.btn{font-family:var(--font-body)!important;}
   <article class="panel panel-wide"><h2>Avg Drop Size - Last 4 Weeks</h2><div class="chart"><canvas id="dropSize4Weeks"></canvas></div></article>
   <article class="panel"><h2>Fridge Prod. Breakdown</h2><div class="chart"><canvas id="fridgeBreakdown"></canvas></div></article>
   <article class="panel"><h2>Draught Machine Productivity</h2><div class="chart"><canvas id="draughtBreakdown"></canvas></div></article>
-  <article class="panel"><h2>Volume Summary</h2><div class="chart"><canvas id="volumeSummary"></canvas></div></article>
 </section>
 <div class="zone-title"><div><span>Action tables</span><small>Drill into run rate, variance and closing cadence</small></div></div>
 <section class="table-panel"><div class="toolbar"><strong class="table-title">KA Manager Vol. Perf.</strong><span id="activeScopeNote" style="font-weight:800;color:#6b5b35"></span><button id="exportManager" class="btn">⇩ Export</button></div><div class="table-wrap"><table id="managerTable"></table></div></section>
@@ -472,7 +619,7 @@ Chart.defaults.plugins.legend.labels.usePointStyle=true;Chart.defaults.plugins.l
 Chart.defaults.plugins.tooltip.backgroundColor='rgba(23,23,23,.92)';Chart.defaults.plugins.tooltip.padding=10;Chart.defaults.plugins.tooltip.cornerRadius=8;
 
 let D,F,LAST,MONTH_START,YEAR_START,charts={};
-const NAVY="#10233f", SAND="#d7c6a3", GREEN="#15935a", GOLD="#d69305", RED="#c9362c";
+const NAVY="#315F8D", SAND="#d7c6a3", GREEN="#15935a", GOLD="#d69305", RED="#c9362c";
 const val=v=>{
   if(v===null||v===undefined||String(v).trim()==="") return null;
   const n=Number(String(v).replace(/,/g,""));
@@ -663,10 +810,12 @@ function renderCards(){
  const kaManagers=unique(outs,"KA Manager").length;
  const fridgeCount=outs.filter(r=>bool(r["Has Fridge"])).length;
  const draughtCount=outs.filter(r=>hasDraught(r)).length;
- const avgDrop=outs.length?displayVolume(k.actual/outs.length,s):null;
- const volumeSub=`Target: ${num(displayVolume(k.target,s))} ${unit} &nbsp; Actual: ${num(displayVolume(k.actual,s))} ${unit}<br><span style="font-size:11px;color:#7b6d54">Category: ${s.category}</span>`;
+ const b=periodBounds(s.period);
+ const periodDays=daysInPeriod(b.start,b.end);
+ const dailyDrop=(outs.length&&periodDays)?displayVolume(k.actual/outs.length/periodDays,s):null;
+ const volumeSub=`Tar: ${num(displayVolume(k.target,s))} ${unit} &nbsp; Act: ${num(displayVolume(k.actual,s))} ${unit}<br><span class="muted-mini">Cat: ${s.category}</span>`;
  const visitSub=`Target: ${num(k.planned)} visits &nbsp; Actual: ${num(k.actualVisits)} visits`;
- const activeCard=`<div class="card active-summary"><div class="card-title">Active Outlets</div><div class="card-value">${num(k.activeOutlets)}</div><div class="active-mini-grid"><div class="active-mini"><div class="mini-label">KA Managers</div><div class="mini-value">${num(kaManagers)}</div></div><div class="active-mini"><div class="mini-label">Fridge</div><div class="mini-value">${num(fridgeCount)}</div></div><div class="active-mini"><div class="mini-label">Draught Machine</div><div class="mini-value">${num(draughtCount)}</div></div><div class="active-mini"><div class="mini-label">Avg Drop Size</div><div class="mini-value">${num(avgDrop,1)} ${unit}</div></div></div></div>`;
+ const activeCard=`<div class="card active-summary"><div class="card-title">Active Outlets</div><div class="card-value">${num(k.activeOutlets)}</div><div class="active-mini-grid"><div class="active-mini"><div class="mini-label">KA Managers</div><div class="mini-value">${num(kaManagers)}</div></div><div class="active-mini"><div class="mini-label">Fridge</div><div class="mini-value">${num(fridgeCount)}</div></div><div class="active-mini"><div class="mini-label">Draught Machine</div><div class="mini-value">${num(draughtCount)}</div></div><div class="active-mini"><div class="mini-label">Daily Drop Size</div><div class="mini-value">${dailyDrop==null?"—":Math.ceil(dailyDrop).toLocaleString()} ${unit.replace("Crate Eq.","Cr Eq")}/day</div></div></div></div>`;
  const cards=[
    ["Overall KPI",k.overall,D.kpiTargets["Overall KPI"]||.8,"p"],
    ["Volume Achievement",k.volumeAch,D.kpiTargets.Volume||1,"p",volumeSub],
@@ -674,11 +823,118 @@ function renderCards(){
    ["Visit Completion",k.visitCompletion,D.kpiTargets["Visit Completion"]||1,"p",visitSub],
    ["Execution Standard",k.executionActual,k.executionTarget,"p"]
  ];
- const normalCards=cards.map(c=>{const val=c[3]==="p"?pct(c[1]):c[3]==="d"?num(c[1],2):num(c[1]);const sub=c[4]??(c[2]==null?"":`Target: ${c[3]==="p"?pct(c[2]):num(c[2],2)}`);const ach=c[2]!=null&&c[1]!=null?cap(div(c[1],c[2])):null;return `<div class="card"><div class="card-title">${c[0]}</div><div class="card-value">${val}</div><div class="card-sub">${sub}</div>${ach!=null?`<div class="progress"><span style="width:${Math.round(ach*100)}%;background:${GREEN}"></span></div>`:""}</div>`}).join("");
+ const normalCards=cards.map(c=>{const val=c[3]==="p"?pct(c[1]):c[3]==="d"?num(c[1],2):num(c[1]);const sub=c[4]??(c[2]==null?"":`Target: ${c[3]==="p"?pct(c[2]):num(c[2],2)}`);const ach=c[2]!=null&&c[1]!=null?cap(div(c[1],c[2])):null;const cardClass=`card ${c[0]==="Volume Achievement"?"card-volume":""}`.trim();return `<div class="${cardClass}"><div class="card-title">${c[0]}</div><div class="card-value">${val}</div><div class="card-sub">${sub}</div>${ach!=null?`<div class="progress"><span style="width:${Math.round(ach*100)}%;background:${GREEN}"></span></div>`:""}</div>`}).join("");
  document.getElementById("cards").innerHTML=activeCard+normalCards;
 }
 function kill(id){if(charts[id]){charts[id].destroy();delete charts[id]}}
-function combo(id,rows,labelKey,aKey,tKey,hKey){kill(id);charts[id]=new Chart(document.getElementById(id),{type:"bar",data:{labels:rows.map(r=>r[labelKey]),datasets:[{label:"Target",data:rows.map(r=>r[tKey]??0),backgroundColor:NAVY,borderColor:"rgba(255,255,255,.55)",borderWidth:1,borderRadius:8,borderSkipped:false,barPercentage:.68,categoryPercentage:.72,yAxisID:"y"},{label:"Actual",data:rows.map(r=>r[aKey]??0),backgroundColor:GREEN,borderColor:"rgba(255,255,255,.55)",borderWidth:1,borderRadius:8,borderSkipped:false,barPercentage:.68,categoryPercentage:.72,yAxisID:"y"},{label:"Achievement %",data:rows.map(r=>r[hKey]==null?null:r[hKey]*100),type:"line",borderColor:GOLD,backgroundColor:GOLD,borderWidth:3,tension:.42,borderDash:[7,5],pointRadius:5,pointHoverRadius:7,pointBackgroundColor:"#fffaf0",pointBorderColor:GOLD,pointBorderWidth:2,yAxisID:"y1"}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"top",align:"center",labels:{usePointStyle:true,boxWidth:9,padding:18,font:{weight:"800",size:11}}},datalabels:{display:c=>c.datasetIndex===2,formatter:v=>v==null?"":Math.round(v)+"%",anchor:"end",align:"top",offset:4,color:"#171717",font:{weight:"900",size:11}}},scales:{x:{grid:{display:false},ticks:{color:"#313131",font:{weight:"750",size:11}}},y:{beginAtZero:true,grid:{color:"rgba(126,104,59,.18)",drawBorder:false},ticks:{color:"#3f3f3f",font:{weight:"650"}}},y1:{beginAtZero:true,position:"right",grid:{drawOnChartArea:false},ticks:{callback:v=>v+"%",color:"#3f3f3f",font:{weight:"650"}}}}}})}
+function combo(id,rows,labelKey,aKey,tKey,hKey){
+ kill(id);
+ const targetColor=NAVY, actualColor=GREEN, achievementColor="#d99500";
+ const achievementAnchor=rows.map(r=>Math.max(val(r[aKey])||0,val(r[tKey])||0));
+ const isTotalChart=id==="totalVolume";
+ const slimBar=isTotalChart?34:undefined;
+ charts[id]=new Chart(document.getElementById(id),{
+  type:"bar",
+  data:{
+   labels:rows.map(r=>r[labelKey]),
+   datasets:[
+    {
+      label:"Target",
+      data:rows.map(r=>r[tKey]??0),
+      backgroundColor:targetColor,
+      borderRadius:7,
+      yAxisID:"y",
+      order:2,
+      maxBarThickness:isTotalChart?34:46,
+      barThickness:slimBar,
+      categoryPercentage:isTotalChart?.38:.82,
+      barPercentage:isTotalChart?.62:.82
+    },
+    {
+      label:"Actual",
+      data:rows.map(r=>r[aKey]??0),
+      backgroundColor:actualColor,
+      borderRadius:7,
+      yAxisID:"y",
+      order:2,
+      maxBarThickness:isTotalChart?34:46,
+      barThickness:slimBar,
+      categoryPercentage:isTotalChart?.38:.82,
+      barPercentage:isTotalChart?.62:.82
+    },
+    {
+      label:"Achievement %",
+      data:achievementAnchor,
+      type:"line",
+      borderColor:"rgba(0,0,0,0)",
+      backgroundColor:"rgba(0,0,0,0)",
+      pointRadius:0,
+      pointHoverRadius:0,
+      borderWidth:0,
+      tension:0,
+      yAxisID:"y",
+      order:1
+    }
+   ]
+  },
+  options:{
+   responsive:true,
+   maintainAspectRatio:false,
+   plugins:{
+    legend:{
+      position:"top",
+      align:"center",
+      labels:{
+        usePointStyle:true,
+        boxWidth:isTotalChart?8:10,
+        padding:isTotalChart?10:14,
+        font:{size:isTotalChart?10:11,weight:"800"},
+        generateLabels:(chart)=>{
+          const base=Chart.defaults.plugins.legend.labels.generateLabels(chart);
+          return base.map(item=>{
+            let shortText=item.text;
+            if(item.text==="Achievement %") shortText="Ach %";
+            if(item.text==="Target") shortText="Tar";
+            if(item.text==="Actual") shortText="Act";
+            if(item.text==="Achievement %"){
+              return {...item,text:shortText,pointStyle:"circle",fillStyle:"#fff",strokeStyle:achievementColor,lineWidth:2};
+            }
+            return {...item,text:shortText};
+          });
+        }
+      }
+    },
+    datalabels:{
+     display:c=>c.datasetIndex===2,
+     formatter:(v,c)=>{
+       const row=rows[c.dataIndex];
+       const ach=row[hKey];
+       return ach==null?"":Math.round(ach*100)+"%";
+     },
+     anchor:"end",
+     align:"top",
+     offset:2,
+     color:achievementColor,
+     font:{weight:"900",size:11}
+    },
+    tooltip:{
+      callbacks:{
+        label:ctx=>{
+          if(ctx.dataset.label==="Achievement %"){
+            const ach=rows[ctx.dataIndex][hKey];
+            return ach==null?"Achievement: —":"Achievement: "+Math.round(ach*100)+"%";
+          }
+          return `${ctx.dataset.label}: ${num(ctx.parsed.y,0)}`;
+        }
+      }
+    }
+   },
+   scales:{
+    y:{beginAtZero:true,grid:{color:"#ece7dd"}}
+   }
+  }
+ })
+}
 function doughnut(id,labels,values){kill(id);charts[id]=new Chart(document.getElementById(id),{type:"doughnut",data:{labels,datasets:[{data:values,backgroundColor:[GREEN,"#d9b65f","#b84a3f"],borderColor:"#fffaf0",borderWidth:4,hoverBorderWidth:5,hoverOffset:9,spacing:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:"64%",plugins:{legend:{position:"bottom",align:"center",labels:{usePointStyle:true,boxWidth:9,padding:18,font:{weight:"800",size:11}}},datalabels:{formatter:v=>v?num(v,0):"",color:"#fff",font:{weight:"1000",size:14},textStrokeColor:"rgba(0,0,0,.22)",textStrokeWidth:2}}}})}
 function lineChart(id,rows,labelKey,valueKey,label){kill(id);charts[id]=new Chart(document.getElementById(id),{type:"line",data:{labels:rows.map(r=>r[labelKey]),datasets:[{label,data:rows.map(r=>r[valueKey]??0),borderColor:GOLD,backgroundColor:"rgba(214,147,5,.18)",borderWidth:4,tension:.42,fill:true,pointRadius:5,pointHoverRadius:8,pointBackgroundColor:"#fffaf0",pointBorderColor:GOLD,pointBorderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"top",align:"center",labels:{usePointStyle:true,boxWidth:9,padding:18,font:{weight:"800",size:11}}},datalabels:{display:true,formatter:v=>v?num(v,1):"",anchor:"end",align:"top",offset:6,color:"#171717",font:{weight:"1000",size:10}}},scales:{x:{grid:{display:false},ticks:{color:"#313131",font:{weight:"750",size:11}}},y:{beginAtZero:true,grid:{color:"rgba(126,104,59,.18)",drawBorder:false},ticks:{color:"#3f3f3f",font:{weight:"650"}}}}}})}
 function dropSizeWeeklyRows(s){
@@ -696,45 +952,116 @@ function dropSizeWeeklyRows(s){
 }
 function tablePeriodDates(){
   const s=state(), b=periodBounds(s.period);
+
   if(String(s.period||"").startsWith("MONTH:")){
-    return {start:b.start,end:b.end,monthStart:b.start,periodEnd:b.end,isClosedMonth:true};
+    return {
+      start:b.start,
+      end:b.end,
+      monthStart:b.start,
+      periodEnd:b.end,
+      isClosedMonth:true,
+      isYTD:false
+    };
   }
-  return {start:MONTH_START,end:LAST,monthStart:MONTH_START,periodEnd:LAST,isClosedMonth:false};
+
+  if(s.period==="YTD"){
+    return {
+      start:YEAR_START,
+      end:LAST,
+      monthStart:MONTH_START,
+      periodEnd:LAST,
+      isClosedMonth:false,
+      isYTD:true
+    };
+  }
+
+  return {
+    start:MONTH_START,
+    end:LAST,
+    monthStart:MONTH_START,
+    periodEnd:LAST,
+    isClosedMonth:false,
+    isYTD:false
+  };
 }
 function monthlyTargets(s){
   if(s.sku!=="ALL")return [];
   const d=tablePeriodDates();
-  return F.targets.filter(r=>{const m=monthStartFromString(r["Target Month"]);return targetMatch(r,s)&&m.getFullYear()===d.monthStart.getFullYear()&&m.getMonth()===d.monthStart.getMonth()});
+  return F.targets.filter(r=>{
+    const m=monthStartFromString(r["Target Month"]);
+    return targetMatch(r,s)
+      && m.getFullYear()===d.monthStart.getFullYear()
+      && m.getMonth()===d.monthStart.getMonth();
+  });
 }
-function mtdSales(s){const d=tablePeriodDates();return F.sales.filter(r=>salesMatch(r,s)&&inRange(r.Date,d.start,d.end))}
+function periodTargets(s){
+  if(s.sku!=="ALL")return [];
+  const d=tablePeriodDates();
+  return targetRows(s,d.start,d.end);
+}
+function fullContextTargets(s){
+  if(s.sku!=="ALL")return [];
+  const d=tablePeriodDates();
+
+  // MTD: full target of the active/current month.
+  // Closed month: full target of the selected month.
+  // YTD: full targets from year start through the latest data month.
+  if(d.isYTD){
+    const ytdMonthStart=new Date(YEAR_START.getFullYear(),YEAR_START.getMonth(),1);
+    const latestMonthStart=new Date(LAST.getFullYear(),LAST.getMonth(),1);
+    return F.targets.filter(r=>{
+      const m=monthStartFromString(r["Target Month"]);
+      return targetMatch(r,s)&&m>=ytdMonthStart&&m<=latestMonthStart;
+    });
+  }
+
+  return monthlyTargets(s);
+}
+function mtdSales(s){
+  const d=tablePeriodDates();
+  return F.sales.filter(r=>salesMatch(r,s)&&inRange(r.Date,d.start,d.end));
+}
 function volumePerfRow(labels,s){
-  const d=tablePeriodDates(), monthlyTarget=sum(monthlyTargets(s),"Full Month Target");
-  const wdFull=workingDays(d.monthStart,monthEnd(d.monthStart));
-  const wdElapsed=workingDays(d.monthStart,d.periodEnd);
-  const afterEnd=new Date(d.periodEnd);afterEnd.setDate(afterEnd.getDate()+1);
-  const wdRemaining=d.isClosedMonth?0:workingDays(afterEnd,monthEnd(d.monthStart));
+  const d=tablePeriodDates();
+
+  // Full Month Target remains the full target for the selected/current month.
+  // The dynamic Period Target below follows the Date / Period filter:
+  // MTD = current month phased target, YTD = year-to-date phased target, closed month = full month target.
+  const monthlyTarget=sum(fullContextTargets(s),"Full Month Target");
+  const periodTarget=phasedTargetTotal(periodTargets(s),d.end);
+
+  const periodWorkingDays=workingDays(d.start,d.end);
+  const monthWorkingDays=workingDays(d.monthStart,monthEnd(d.monthStart));
+
+  const afterEnd=new Date(d.periodEnd);
+  afterEnd.setDate(afterEnd.getDate()+1);
+  const wdRemaining=(d.isClosedMonth||d.isYTD)?0:workingDays(afterEnd,monthEnd(d.monthStart));
+
   const actual=sum(mtdSales(s),"Actual Volume");
-  const mtdTarget=wdFull?monthlyTarget*wdElapsed/wdFull:null;
-  const dailyTarget=wdFull?monthlyTarget/wdFull:null;
-  const actualRR=wdElapsed?actual/wdElapsed:null;
+  const dailyTarget=periodWorkingDays?periodTarget/periodWorkingDays:null;
+  const actualRR=periodWorkingDays?actual/periodWorkingDays:null;
   const dailyVariance=(dailyTarget!=null&&actualRR!=null)?dailyTarget-actualRR:null;
-  const remaining=Math.max(monthlyTarget-actual,0);
+
+  // For MTD this is remaining requirement to close the current month.
+  // For YTD / closed month there is no remaining working day inside the selected period.
+  const remaining=Math.max(periodTarget-actual,0);
   const reqRR=wdRemaining?remaining/wdRemaining:null;
-  const projected=(actualRR||0)*wdFull;
+
+  const projected=(actualRR||0)*(periodWorkingDays||monthWorkingDays||0);
 
   return {
     ...labels,
     "Monthly Target":displayVolume(monthlyTarget,s),
-    "MTD Target":displayVolume(mtdTarget,s),
+    "MTD Target":displayVolume(periodTarget,s),
     "MTD Actual":displayVolume(actual,s),
-    "% MTD Target Achieved":div(actual,mtdTarget),
+    "% MTD Target Achieved":div(actual,periodTarget),
     "% Monthly Target Achieved":div(actual,monthlyTarget),
     "Daily Target":displayVolume(dailyTarget,s),
     "Actual Run rate":displayVolume(actualRR,s),
     "Daily Target - Actual RR":displayVolume(dailyVariance,s),
     "Expected Daily required Run rate":displayVolume(reqRR,s),
-    "Variance Monthly (Actual Vs Target)":displayVolume(actual-monthlyTarget,s),
-    "Closing RR (Cadence)":div(projected,monthlyTarget)
+    "Variance Monthly (Actual Vs Target)":displayVolume(actual-periodTarget,s),
+    "Closing RR (Cadence)":div(projected,periodTarget)
   }
 }
 function buildManagerRows(){
@@ -748,41 +1075,115 @@ function buildZeroRows(){return buildOutletRows().filter(r=>(val(r["MTD Actual"]
 function buildCharts(){
  const s=state(),{start,end}=periodBounds(s.period),managers=unique(selectedOutlets(s),"KA Manager");
 
- combo("managerVolume",managers.map(m=>{const localState={...s,manager:m};const k=aggregateKPIs(localState,s.period);return {"KA Manager":m,Actual:displayVolume(k.actual,s),Target:displayVolume(k.target,s),Achievement:k.volumeAch}}),"KA Manager","Actual","Target","Achievement");
+ const managerVolumeRows=managers.map(m=>{
+   const localState={...s,manager:m};
+   const k=aggregateKPIs(localState,s.period);
+   return {"KA Manager":m,Actual:displayVolume(k.actual,s),Target:displayVolume(k.target,s),Achievement:k.volumeAch};
+ });
+ combo("managerVolume",managerVolumeRows,"KA Manager","Actual","Target","Achievement");
 
- combo("managerVisits",managers.map(m=>{const rows=visitRows({...s,manager:m},start,end),target=sum(rows,"Planned Visits"),actual=sum(rows,"Actual Visits");return {"KA Manager":m,Target:target,Actual:actual,Achievement:div(actual,target)}}),"KA Manager","Actual","Target","Achievement");
+ const totalK=aggregateKPIs(s,s.period);
+ if(document.getElementById("totalVolume")){
+   combo("totalVolume",[{"Metric":"Total","Actual":displayVolume(totalK.actual,s),"Target":displayVolume(totalK.target,s),"Achievement":totalK.volumeAch}],"Metric","Actual","Target","Achievement");
+ }
 
- combo("managerExecution",managers.map(m=>{const exec=latestExecByOutlet(executionRows({...s,manager:m},start,end));const actual=exec.length?exec.reduce((a,r)=>a+(val(r["Execution Actual"])||0),0)/exec.length:null,target=exec.length?exec.reduce((a,r)=>a+(val(r["Execution Target"])||0),0)/exec.length:null;return {"KA Manager":m,Actual:actual,Target:target,Achievement:div(actual,target)}}),"KA Manager","Actual","Target","Achievement");
+ combo("managerVisits",managers.map(m=>{
+   const rows=visitRows({...s,manager:m},start,end);
+   const planned=sum(rows,"Planned Visits"),actual=sum(rows,"Actual Visits");
+   return {"KA Manager":m,Target:planned,Actual:actual,Achievement:div(actual,planned)}
+ }),"KA Manager","Actual","Target","Achievement");
 
- lineChart("dropSize4Weeks",dropSizeWeeklyRows(s),"Week","Avg Drop Size",`Avg Drop Size (${volumeUnitLabel(s)} / Outlet)`);
+ combo("managerExecution",managers.map(m=>{
+   const exec=latestExecByOutlet(executionRows({...s,manager:m},start,end));
+   const actual=exec.length?exec.reduce((a,r)=>a+(val(r["Execution Actual"])||0),0)/exec.length:null;
+   const target=exec.length?exec.reduce((a,r)=>a+(val(r["Execution Target"])||0),0)/exec.length:null;
+   return {"KA Manager":m,Actual:actual,Target:target,Achievement:div(actual,target)}
+ }),"KA Manager","Actual","Target","Achievement");
 
+ if(document.getElementById("dropSize4Weeks")){
+   const weeklyRows=dropSizeWeeklyRows(s);
+   lineChart("dropSize4Weeks",weeklyRows,"Week","Avg Drop Size",`Avg Drop Size (${volumeUnitLabel(s)} / Outlet)`);
+ }
+
+ // Fridge breakdown uses Bottle sales and actual counts.
  const fridgeS=fridgeCalcState(s);
- const fridgeOuts=selectedOutlets(s).filter(r=>bool(r["Has Fridge"]));
- const fridgeIds=new Set(fridgeOuts.map(r=>r["Outlet ID"]));
- const fridgeSales=salesRows(fridgeS,start,end).filter(r=>fridgeIds.has(r["Outlet ID"]));
- const fridgeVol=new Map();
- fridgeSales.forEach(r=>fridgeVol.set(r["Outlet ID"],(fridgeVol.get(r["Outlet ID"])||0)+(val(r["Actual Volume"])||0)));
- const days=daysInPeriod(start,end),fridgeCounts={Productive:0,Underproductive:0,Inactive:0};
- fridgeOuts.forEach(o=>{const p=(fridgeVol.get(o["Outlet ID"])||0)/days;if(p>=1)fridgeCounts.Productive++;else if(p>0)fridgeCounts.Underproductive++;else fridgeCounts.Inactive++});
- doughnut("fridgeBreakdown",["Productive","Underproductive","Inactive"],[fridgeCounts.Productive,fridgeCounts.Underproductive,fridgeCounts.Inactive]);
+ const outs=selectedOutlets(s).filter(r=>bool(r["Has Fridge"]));
+ const ids=new Set(outs.map(r=>r["Outlet ID"]));
+ const sales=salesRows(fridgeS,start,end).filter(r=>ids.has(r["Outlet ID"]));
+ const vol=new Map();
+ sales.forEach(r=>vol.set(r["Outlet ID"],(vol.get(r["Outlet ID"])||0)+(val(r["Actual Volume"])||0)));
+ const days=daysInPeriod(start,end),counts={Productive:0,Underproductive:0,Inactive:0};
+ outs.forEach(o=>{const p=(vol.get(o["Outlet ID"])||0)/days;if(p>=1)counts.Productive++;else if(p>0)counts.Underproductive++;else counts.Inactive++});
+ if(document.getElementById("fridgeBreakdown")){
+   doughnut("fridgeBreakdown",["Productive","Underproductive","Inactive"],[counts.Productive,counts.Underproductive,counts.Inactive]);
+ }
 
- // Draught machine productivity standard: 0.5 keg per calendar day.
- const draughtS=draughtCalcState(s);
- const draughtOuts=selectedOutlets(s).filter(r=>hasDraught(r));
- const draughtIds=new Set(draughtOuts.map(r=>r["Outlet ID"]));
- const draughtSales=salesRows(draughtS,start,end).filter(r=>draughtIds.has(r["Outlet ID"]));
- const draughtVol=new Map();
- draughtSales.forEach(r=>draughtVol.set(r["Outlet ID"],(draughtVol.get(r["Outlet ID"])||0)+(val(r["Actual Volume"])||0)));
- const draughtCounts={Productive:0,Underproductive:0,Inactive:0};
- draughtOuts.forEach(o=>{const keg=(draughtVol.get(o["Outlet ID"])||0)/KEG_FACTOR;const p=keg/days;if(p>=0.5)draughtCounts.Productive++;else if(p>0)draughtCounts.Underproductive++;else draughtCounts.Inactive++});
- doughnut("draughtBreakdown",["Productive","Underproductive","Inactive"],[draughtCounts.Productive,draughtCounts.Underproductive,draughtCounts.Inactive]);
-
- const k=aggregateKPIs(s,s.period);
- combo("volumeSummary",[{Metric:"Volume",Actual:displayVolume(k.actual,s),Target:displayVolume(k.target,s),Achievement:k.volumeAch}],"Metric","Actual","Target","Achievement")
+ // Draught machine productivity: productive standard = 0.5 keg/day.
+ if(document.getElementById("draughtBreakdown")){
+   const draughtS={...s,category:"Draught",sku:"ALL"};
+   const dOuts=selectedOutlets(s).filter(r=>bool(r["Has Draught"])||bool(r["Draught Installed"]));
+   const dIds=new Set(dOuts.map(r=>r["Outlet ID"]));
+   const dSales=salesRows(draughtS,start,end).filter(r=>dIds.has(r["Outlet ID"]));
+   const dVol=new Map();
+   dSales.forEach(r=>dVol.set(r["Outlet ID"],(dVol.get(r["Outlet ID"])||0)+(val(r["Actual Volume"])||0)));
+   const dCounts={Productive:0,Underproductive:0,Inactive:0};
+   dOuts.forEach(o=>{
+     const crateEq=(dVol.get(o["Outlet ID"])||0);
+     const kegs=crateEq/KEG_FACTOR;
+     const kegPerDay=kegs/days;
+     if(kegPerDay>=0.5)dCounts.Productive++;
+     else if(kegPerDay>0)dCounts.Underproductive++;
+     else dCounts.Inactive++;
+   });
+   doughnut("draughtBreakdown",["Productive","Underproductive","Inactive"],[dCounts.Productive,dCounts.Underproductive,dCounts.Inactive]);
+ }
 }
 const managerCols=[["KA Manager","KA Manager","t"],["Actual Vol Contribution","Actual Vol Contribution","p"],["Monthly Target","Month Target","n"],["MTD Target","Period Target","n"],["MTD Actual","Actual","n"],["% MTD Target Achieved","Period Ach %","p"],["% Monthly Target Achieved","Month Ach %","p"],["Daily Target","Daily Tgt","n1"],["Actual Run rate","Actual RR","n1"],["Daily Target - Actual RR","Daily Var.","dailyVar"],["Expected Daily required Run rate","Req. RR","n1"],["Variance Monthly (Actual Vs Target)","Month Var.","n"],["Closing RR (Cadence)","Closing RR","cadence"]];
 const outletCols=[["KA Manager","KA Manager","t"],["Outlet Name","Outlet","t"],["Outlet ID","Outlet ID","t"],["Monthly Target","Month Target","n"],["MTD Target","Period Target","n"],["MTD Actual","Actual","n"],["% MTD Target Achieved","Period Ach %","p"],["% Monthly Target Achieved","Month Ach %","p"],["Daily Target","Daily Tgt","n1"],["Actual Run rate","Actual RR","n1"],["Daily Target - Actual RR","Daily Var.","dailyVar"],["Expected Daily required Run rate","Req. RR","n1"],["Variance Monthly (Actual Vs Target)","Month Var.","n"],["Closing RR (Cadence)","Closing RR","cadence"]];
 const zeroCols=[["KA Manager","KA Manager","t"],["Outlet Name","Outlet","t"],["Outlet ID","Outlet ID","t"]];
+
+function periodHeaderLabel(){
+ const p=state().period;
+ if(p==="MTD") return "MTD";
+ if(p==="YTD") return "YTD";
+ if(String(p||"").startsWith("MONTH:")){
+   const key=p.split(":")[1];
+   return monthLabelFromKey(key);
+ }
+ return "Period";
+}
+function dynamicTableCols(cols){
+ const periodLabel=periodHeaderLabel();
+ const p=state().period;
+ let fullTargetLabel="Month Target";
+ let monthAchLabel="Month Ach %";
+
+ if(p==="MTD"){
+   fullTargetLabel="Full Month Target";
+   monthAchLabel="Month Ach %";
+ }else if(p==="YTD"){
+   fullTargetLabel="Full YTD Target";
+   monthAchLabel="YTD Full Ach %";
+ }else if(String(p||"").startsWith("MONTH:")){
+   fullTargetLabel=periodLabel+" Target";
+   monthAchLabel=periodLabel+" Ach %";
+ }
+
+ return cols.map(c=>{
+   const x=[...c];
+   if(x[0]==="Monthly Target") x[1]=fullTargetLabel;
+   if(x[0]==="MTD Target") x[1]=periodLabel+" Target";
+   if(x[0]==="% MTD Target Achieved") x[1]=periodLabel+" Ach %";
+   if(x[0]==="% Monthly Target Achieved") x[1]=monthAchLabel;
+   if(x[0]==="Variance Monthly (Actual Vs Target)"){
+     if(p==="YTD") x[1]="YTD Var.";
+     else if(String(p||"").startsWith("MONTH:")) x[1]=periodLabel+" Var.";
+     else x[1]="Month Var.";
+   }
+   return x;
+ });
+}
+
 function cell(v,t){if(t==="cadence"){const c=v==null||!Number.isFinite(Number(v))?"bad":(Number(v)>=1?"good":(Number(v)>=.9?"watch":"bad"));return `<span class="pill ${c}">${pct(v)}</span>`}if(t==="dailyVar")return num(v,1);if(t==="p")return pct(v);if(t==="n")return num(v,0);if(t==="n1")return num(v,1);return v??"—"}
 function table(id,rows,cols){document.getElementById(id).innerHTML=`<thead><tr>${cols.map(c=>`<th>${c[1]}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>{let vc="";
       if(c[0]==="Variance Monthly (Actual Vs Target)") vc=((Number(r[c[0]])||0)>=0?" positive":" negative");
@@ -800,15 +1201,15 @@ function fillOutletTableSelector(rows){
   names.forEach(n=>{const o=document.createElement("option");o.value=n;o.textContent=n;e.appendChild(o)});
   e.value=names.includes(current)?current:"ALL";
 }
-function renderTables(){const scope=document.getElementById("activeScopeNote");if(scope)scope.textContent="Category: "+(document.getElementById("category").value||"ALL")+" • Volume Unit: "+volumeUnitLabel(state());
+function renderTables(){const scope=document.getElementById("activeScopeNote");if(scope)scope.textContent="Period: "+periodHeaderLabel()+" • Category: "+(document.getElementById("category").value||"ALL")+" • Volume Unit: "+volumeUnitLabel(state())+" • Targets follow selected period";
   currentManagerRows=buildManagerRows();
   const allOutletRows=buildOutletRows();
   fillOutletTableSelector(allOutletRows);
   const selectedOutletName=selectedOutletTableName();
   currentOutletRows=selectedOutletName==="ALL"?allOutletRows:allOutletRows.filter(r=>r["Outlet Name"]===selectedOutletName);
   currentZeroRows=currentOutletRows.filter(r=>(val(r["MTD Actual"])||0)===0).map(r=>({"KA Manager":r["KA Manager"],"Outlet Name":r["Outlet Name"],"Outlet ID":r["Outlet ID"]}));
-  table("managerTable",currentManagerRows,managerCols);
-  table("outletTable",currentOutletRows,outletCols);
+  table("managerTable",currentManagerRows,dynamicTableCols(managerCols));
+  table("outletTable",currentOutletRows,dynamicTableCols(outletCols));
   table("zeroSalesTable",currentZeroRows,zeroCols);
 }
 function csv(name,rows,cols){const q=v=>'"'+String(v??"").replaceAll('"','""')+'"';const out=[cols.map(c=>q(c[1])).join(","),...rows.map(r=>cols.map(c=>q(r[c[0]])).join(","))].join("\n");const b=new Blob(["\ufeff"+out],{type:"text/csv"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;a.click();URL.revokeObjectURL(a.href)}
@@ -825,8 +1226,8 @@ function init(payload){D=payload;F=D.facts;LAST=new Date(D.meta.lastDataDate+"T0
 document.getElementById("clear").onclick=()=>{["manager","segment","category"].forEach(id=>document.getElementById(id).value="ALL");document.getElementById("period").value="MTD";const ots=document.getElementById("outletTableSelector");if(ots)ots.value="ALL";renderAll()};
 ["period","category"].forEach(id=>document.getElementById(id).onchange=renderAll);
 ["manager","segment"].forEach(id=>document.getElementById(id).onchange=()=>{const ots=document.getElementById("outletTableSelector");if(ots)ots.value="ALL";renderAll()});document.getElementById("outletTableSelector").onchange=renderTables;
-document.getElementById("exportManager").onclick=()=>csv("KA_Manager_Volume_Performance.csv",currentManagerRows,managerCols);
-document.getElementById("exportOutlet").onclick=()=>csv("Outlet_Volume_Performance.csv",currentOutletRows,outletCols);
+document.getElementById("exportManager").onclick=()=>csv("KA_Manager_Volume_Performance.csv",currentManagerRows,dynamicTableCols(managerCols));
+document.getElementById("exportOutlet").onclick=()=>csv("Outlet_Volume_Performance.csv",currentOutletRows,dynamicTableCols(outletCols));
 document.getElementById("exportZeroSales").onclick=()=>csv("Zero_Sales_Outlets.csv",currentZeroRows,zeroCols);
 document.getElementById("csvInput").addEventListener("change",async e=>{try{const file=e.target.files&&e.target.files[0];if(!file)return;setStatus("Loading "+file.name+"...");const rows=await parseCSV(file);const payload=payloadFromSingleCSV(rows);setStatus("Loaded successfully.","success");init(payload)}catch(err){console.error(err);setStatus("Could not load CSV: "+err.message,"error")}});
 </script>
